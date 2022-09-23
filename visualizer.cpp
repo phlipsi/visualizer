@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <functional>
 #include <stdexcept>
+#include <vector>
+#include <cassert>
 
 double sawtooth(double t) {
     double scale = 2.0 / M_PI;
@@ -36,7 +38,7 @@ double hat(double t) {
 
 class Rectangle {
 public:
-    explicit Rectangle(SDL_Renderer *renderer, double period)
+    Rectangle(SDL_Renderer *renderer, double period)
       : renderer(renderer),
         texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 100, 100)),
         period(period)
@@ -44,6 +46,7 @@ public:
         if (texture == nullptr) {
             throw std::runtime_error("Can't create texture for rectangle");
         }
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     }
 
     ~Rectangle() {
@@ -51,22 +54,20 @@ public:
     }
 
     void render(double time) const {
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
         SDL_RenderClear(renderer);
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-        const double width = 10.0 * sin(2 * M_PI * time / period) + 80.0;
-        const double height = -5.0 * sin(2 * M_PI * time / period) + 40.0;
+        const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
+        const double height = -5.0 * sin(2 * M_PI * time / period) + 30.0;
         SDL_Rect r = { (100 - width) / 2, (100 - height) / 2, width, height };
         SDL_RenderFillRect(renderer, &r);
-        SDL_SetRenderTarget(renderer, nullptr);
     }
 
     void blit_to(SDL_Texture *destination, int x, int y, double angle) const {
         SDL_SetRenderTarget(renderer, destination);
-        SDL_Rect dest = { x, y, 100, 100 };
+        SDL_Rect dest = { x - 50, y - 50, 100, 100 };
         SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
     }
 
@@ -77,6 +78,56 @@ private:
     SDL_Texture *texture;
     double period;
 };
+
+class RectangleCircle {
+public:
+    RectangleCircle(SDL_Renderer *renderer, double period)
+      : renderer(renderer),
+        rectangle(renderer, period * 2.0 / 3.0),
+        texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 500, 500)),
+        period(period)
+    {
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    }
+
+    ~RectangleCircle() {
+        SDL_DestroyTexture(texture);
+    }
+
+    void render(double time) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        SDL_SetRenderTarget(renderer, texture);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        SDL_RenderClear(renderer);
+        rectangle.render(time);
+        for (int i = 0; i < 12; ++i) {
+            const double x = 250.0 + 150.0 * cos(2 * M_PI * i / 12.0);
+            const double y = 250.0 + 150.0 * sin(2 * M_PI * i / 12.0);
+            const double alpha = 360.0 * i / 12.0 + 180.0 * sawtooth(time / 4000);
+            rectangle.blit_to(texture, x, y, alpha);
+        }
+    }
+
+    void blit_to(SDL_Texture *destination, int x, int y, double angle) const {
+        SDL_SetRenderTarget(renderer, destination);
+        SDL_Rect dest = { x - 250, y - 250, 500, 500 };
+        SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
+    }
+
+private:
+    SDL_Renderer *renderer;
+    Rectangle rectangle;
+    SDL_Texture *texture;
+    double period;
+};
+
+std::vector<uint32_t> probe_texture(SDL_Renderer *renderer, SDL_Texture *texture, int width, int height) {
+    std::vector<uint32_t> buffer(width * height);
+    SDL_SetRenderTarget(renderer, texture);
+    int rc = SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_RGBA8888, buffer.data(), width * 4);
+    assert(rc == 0);
+    return buffer;
+}
 
 int main(int argc, char *argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -89,14 +140,14 @@ int main(int argc, char *argv[]) {
     }
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    SDL_Renderer *const renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer *const renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     if (renderer == nullptr) {
         SDL_DestroyWindow(win);
         SDL_Quit();
         return EXIT_FAILURE;
     }
 
-    Rectangle rectangle(renderer, 2000);
+    RectangleCircle rectangles(renderer, 2000);
 
     SDL_Event e;
     bool quit = false;
@@ -104,12 +155,13 @@ int main(int argc, char *argv[]) {
     while (!quit) {
         const uint32_t now = SDL_GetTicks();
         const uint32_t time = now - initial;
-        rectangle.render(time);
+        rectangles.render(time);
+        SDL_SetRenderTarget(renderer, nullptr);
         SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
         SDL_RenderClear(renderer);
         const double angle = 180.0 * sawtooth(time / 5000.0);
         //const double angle = (70 * 2 * M_PI / 10000) * time + 90 * sin(2 * M_PI * time / 10000);
-        rectangle.blit_to(nullptr, 270, 190, angle);
+        rectangles.blit_to(nullptr, 320, 240, angle);
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
             case SDL_QUIT:
