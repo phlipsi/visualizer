@@ -5,4 +5,4 @@ include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
 conan_basic_setup(TARGETS)
 
 add_executable(visualizer visualizer.cpp)
-target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl)
+target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::sdl2_gfx)
