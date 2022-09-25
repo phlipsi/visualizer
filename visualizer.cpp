@@ -59,7 +59,8 @@ public:
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
         SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        const uint8_t color = 127 * sawtooth(time / 5000) + 128;
+        SDL_SetRenderDrawColor(renderer, color, color, 0, SDL_ALPHA_OPAQUE);
         const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
         const double height = -5.0 * sin(2 * M_PI * time / period) + 30.0;
         SDL_Rect r = { (100 - width) / 2, (100 - height) / 2, width, height };
@@ -157,9 +158,11 @@ public:
         }
     }
 
-    void blit_to(SDL_Texture *destination, int x, int y, double angle) const {
+    void blit_to(SDL_Texture *destination, int x, int y, double scale, double angle) const {
         SDL_SetRenderTarget(renderer, destination);
-        SDL_Rect dest = { x - 250, y - 250, 500, 500 };
+        const int w = scale * 500;
+        const int h = scale * 500;
+        SDL_Rect dest = { x - w/2, y - h/2, w, h };
         SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
     }
 
@@ -207,11 +210,20 @@ int main(int argc, char *argv[]) {
         const uint32_t time = now - initial;
         rectangles.render(time);
         SDL_SetRenderTarget(renderer, nullptr);
-        SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
+        //SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xff);
         SDL_RenderClear(renderer);
+
         const double angle = 180.0 * sawtooth(time / 5000.0);
         //const double angle = (70 * 2 * M_PI / 10000) * time + 90 * sin(2 * M_PI * time / 10000);
-        rectangles.blit_to(nullptr, 320, 240, angle);
+        rectangles.blit_to(nullptr, 320, 240, 1.0, angle);
+
+        const double angle2 = 180.0 * sawtooth(time / 4000.0);
+        rectangles.blit_to(nullptr, 320, 240, 0.5, angle2);
+
+        const double angle3 = 180.0 * sawtooth(time / 6000.0);
+        rectangles.blit_to(nullptr, 320, 240, 1.8, angle3);
+
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
             case SDL_QUIT:
