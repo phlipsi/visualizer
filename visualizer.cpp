@@ -37,12 +37,16 @@ double hat(double t) {
     }
 }
 
-class Rectangle {
+class Item {
 public:
-    Rectangle(SDL_Renderer *renderer, double period)
+    explicit Item(SDL_Renderer *renderer, int width, int height)
       : renderer(renderer),
-        texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 100, 100)),
-        period(period)
+        texture(SDL_CreateTexture(renderer,
+                                  SDL_PIXELFORMAT_RGBA8888,
+                                  SDL_TEXTUREACCESS_TARGET,
+                                  width, height)),
+        width(width),
+        height(height)
     {
         if (texture == nullptr) {
             throw std::runtime_error("Can't create texture for rectangle");
@@ -50,127 +54,139 @@ public:
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     }
 
-    ~Rectangle() {
+    ~Item() {
         SDL_DestroyTexture(texture);
     }
 
-    void render(double time) const {
+    Item(const Item &) = delete;
+    Item &operator = (const Item &) = delete;
+
+    void render() const {
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
         SDL_RenderClear(renderer);
+    }
+
+    void blit_to(SDL_Texture *destination, int x, int y, double scale, double angle) const {
+        SDL_SetRenderTarget(renderer, destination);
+        SDL_Rect dest = { static_cast<int>(x - scale * width / 2),
+                          static_cast<int>(y - scale * height / 2),
+                          static_cast<int>(scale * width),
+                          static_cast<int>(scale * height) };
+        SDL_RenderCopyEx(renderer,
+                         texture,
+                         nullptr,
+                         &dest,
+                         angle,
+                         nullptr,
+                         SDL_FLIP_NONE);
+    }
+
+protected:
+    SDL_Renderer *get_renderer() const {
+        return renderer;
+    }
+
+    SDL_Texture *get_texture() const {
+        return texture;
+    }
+
+private:
+    SDL_Renderer *renderer;
+    SDL_Texture *texture;
+    int width;
+    int height;
+};
+
+class Circle : public Item {
+public:
+    Circle(SDL_Renderer *renderer, double period)
+      : Item(renderer, 100, 100),
+        period(period)
+    { }
+
+    void render(double time) const {
+        Item::render();
+        SDL_SetRenderDrawColor(get_renderer(), 255, 0, 0, 255);
+        const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
+        const double height = -10.0 * sin(2 * M_PI * time / period) + 60.0;
+        filledCircleRGBA(get_renderer(), 50, 50, 50, 128, 128, 128, SDL_ALPHA_OPAQUE);
+    }
+
+private:
+    double period;
+};
+
+class Rectangle : public Item {
+public:
+    Rectangle(SDL_Renderer *renderer, double period)
+      : Item(renderer, 100, 100),
+        period(period)
+    { }
+
+    void render(double time) const {
+        Item::render();
         const uint8_t color = 127 * sawtooth(time / 5000) + 128;
-        SDL_SetRenderDrawColor(renderer, color, color, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(get_renderer(), color, color, 0, SDL_ALPHA_OPAQUE);
         const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
         const double height = -5.0 * sin(2 * M_PI * time / period) + 30.0;
         SDL_Rect r = { (100 - width) / 2, (100 - height) / 2, width, height };
-        SDL_RenderFillRect(renderer, &r);
+        SDL_RenderFillRect(get_renderer(), &r);
     }
 
-    void blit_to(SDL_Texture *destination, int x, int y, double angle) const {
-        SDL_SetRenderTarget(renderer, destination);
-        SDL_Rect dest = { x - 50, y - 50, 100, 100 };
-        SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
-    }
-
-    Rectangle(const Rectangle &) = delete;
-    Rectangle &operator = (const Rectangle &) = delete;
 private:
-    SDL_Renderer *renderer;
-    SDL_Texture *texture;
     double period;
 };
 
-class Triangle {
+class Triangle : public Item {
 public:
     Triangle(SDL_Renderer *renderer, double period)
-        : renderer(renderer),
-        texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 100, 100)),
-        period(period) {
-        if (texture == nullptr) {
-            throw std::runtime_error("Can't create texture for rectangle");
-        }
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-    }
-
-    ~Triangle() {
-        SDL_DestroyTexture(texture);
-    }
+      : Item(renderer, 100, 100),
+        period(period)
+    { }
 
     void render(double time) const {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-        SDL_SetRenderTarget(renderer, texture);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        Item::render();
+        SDL_SetRenderDrawColor(get_renderer(), 255, 0, 0, 255);
         const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
         const double height = -10.0 * sin(2 * M_PI * time / period) + 60.0;
-        filledTrigonRGBA(renderer, 50 - width / 2, 50 + height / 2, 50 + width / 2, 50 + height / 2, 50, 50 - height / 2, 255, 0, 0, 255);
+        filledTrigonRGBA(get_renderer(), 50 - width / 2, 50 + height / 2, 50 + width / 2, 50 + height / 2, 50, 50 - height / 2, 255, 0, 0, 255);
     }
 
-    void blit_to(SDL_Texture *destination, int x, int y, double angle) const {
-        SDL_SetRenderTarget(renderer, destination);
-        SDL_Rect dest = { x - 50, y - 50, 100, 100 };
-        SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
-    }
-
-    Triangle(const Triangle &) = delete;
-    Triangle &operator = (const Triangle &) = delete;
 private:
-    SDL_Renderer *renderer;
-    SDL_Texture *texture;
     double period;
 };
 
-class RectangleCircle {
+class RectangleCircle : public Item {
 public:
     RectangleCircle(SDL_Renderer *renderer, double period)
-      : renderer(renderer),
+      : Item(renderer, 500, 500),
         rectangle(renderer, period * 2.0 / 3.0),
         triangle(renderer, period * 3.0 / 4.0),
-        texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 500, 500)),
         period(period)
-    {
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-    }
-
-    ~RectangleCircle() {
-        SDL_DestroyTexture(texture);
-    }
+    { }
 
     void render(double time) {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-        SDL_SetRenderTarget(renderer, texture);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        SDL_RenderClear(renderer);
+        Item::render();
         rectangle.render(time);
         triangle.render(time);
         for (int i = 0; i < 6; ++i) {
             const double x = 250.0 + 150.0 * cos(2 * M_PI * i / 6.0);
             const double y = 250.0 + 150.0 * sin(2 * M_PI * i / 6.0);
             const double alpha = 360.0 * i / 6.0 + 180.0 * sawtooth(time / 4000);
-            rectangle.blit_to(texture, x, y, alpha);
+            rectangle.blit_to(get_texture(), x, y, 1.0, alpha);
 
             const double x1 = 250.0 + 150.0 * cos(2 * M_PI * (i + 0.5) / 6.0);
             const double y1 = 250.0 + 150.0 * sin(2 * M_PI * (i + 0.5) / 6.0);
             const double alpha1 = 360.0 * (i + 0.5) / 6.0 + 180.0 * sawtooth(time / 3000);
-            triangle.blit_to(texture, x1, y1, alpha1);
+            triangle.blit_to(get_texture(), x1, y1, 1.0, alpha1);
         }
     }
 
-    void blit_to(SDL_Texture *destination, int x, int y, double scale, double angle) const {
-        SDL_SetRenderTarget(renderer, destination);
-        const int w = scale * 500;
-        const int h = scale * 500;
-        SDL_Rect dest = { x - w/2, y - h/2, w, h };
-        SDL_RenderCopyEx(renderer, texture, nullptr, &dest, angle, nullptr, SDL_FLIP_NONE);
-    }
-
 private:
-    SDL_Renderer *renderer;
     Rectangle rectangle;
     Triangle triangle;
-    SDL_Texture *texture;
     double period;
 };
 
