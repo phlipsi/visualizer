@@ -109,9 +109,8 @@ public:
     void render(double time) const {
         Item::render();
         SDL_SetRenderDrawColor(get_renderer(), 255, 0, 0, 255);
-        const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
-        const double height = -10.0 * sin(2 * M_PI * time / period) + 60.0;
-        filledCircleRGBA(get_renderer(), 50, 50, 50, 128, 128, 128, SDL_ALPHA_OPAQUE);
+        const double radius = 10.0 * sin(2 * M_PI * time / period) + 40.0;
+        filledCircleRGBA(get_renderer(), 50, 50, radius, 100, 100, 100, SDL_ALPHA_OPAQUE);
     }
 
 private:
@@ -190,6 +189,29 @@ private:
     double period;
 };
 
+class Circles : public Item {
+public:
+    Circles(SDL_Renderer *renderer, double period)
+      : Item(renderer, 500, 500),
+        circle(renderer, period * 2.0 / 3.0),
+        period(period)
+    { }
+
+    void render(double time) {
+        Item::render();
+        circle.render(time);
+        for (int i = 0; i < 12; ++i) {
+            const double x = 250.0 + 150.0 * cos(2 * M_PI * i / 12.0);
+            const double y = 250.0 + 150.0 * sin(2 * M_PI * i / 12.0);
+            circle.blit_to(get_texture(), x, y, 0.3, 0.0);
+        }
+    }
+
+private:
+    Circle circle;
+    double period;
+};
+
 std::vector<uint32_t> probe_texture(SDL_Renderer *renderer, SDL_Texture *texture, int width, int height) {
     std::vector<uint32_t> buffer(width * height);
     SDL_SetRenderTarget(renderer, texture);
@@ -217,6 +239,7 @@ int main(int argc, char *argv[]) {
     }
 
     RectangleCircle rectangles(renderer, 2000);
+    Circles circles(renderer, 2500);
 
     SDL_Event e;
     bool quit = false;
@@ -225,20 +248,32 @@ int main(int argc, char *argv[]) {
         const uint32_t now = SDL_GetTicks();
         const uint32_t time = now - initial;
         rectangles.render(time);
+        circles.render(time);
         SDL_SetRenderTarget(renderer, nullptr);
         //SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xff);
         SDL_RenderClear(renderer);
 
+        const double f = 0.06 * sin(2 * M_PI * time / 5000.0) + 1.0;
         const double angle = 180.0 * sawtooth(time / 5000.0);
         //const double angle = (70 * 2 * M_PI / 10000) * time + 90 * sin(2 * M_PI * time / 10000);
-        rectangles.blit_to(nullptr, 320, 240, 1.0, angle);
+        rectangles.blit_to(nullptr, 320, 240, f * 1.0, angle);
 
+        const double f2 = 0.06 * sin(2 * M_PI * (time - 1000.0) / 5000.0) + 1.0;
         const double angle2 = 180.0 * sawtooth(time / 4000.0);
-        rectangles.blit_to(nullptr, 320, 240, 0.5, angle2);
+        rectangles.blit_to(nullptr, 320, 240, f2 * 0.35, angle2);
 
+        const double f3 = 0.06 * sin(2 * M_PI * (time - 2000.0) / 5000.0) + 1.0;
         const double angle3 = 180.0 * sawtooth(time / 6000.0);
-        rectangles.blit_to(nullptr, 320, 240, 1.8, angle3);
+        rectangles.blit_to(nullptr, 320, 240, f3 * 2.4, angle3);
+
+        const double f4 = 0.06 * sin(2 * M_PI * (time - 3000.0) / 5000.0) + 1.0;
+        const double angle4 = 360.0 * time / 5000.0;
+        circles.blit_to(nullptr, 320, 240, f4 * 1.55, -angle4);
+
+        const double f5 = 0.06 * sin(2 * M_PI * (time - 4000.0) / 5000.0) + 1.0;
+        const double angle5 = 360.0 * time / 7000.0;
+        circles.blit_to(nullptr, 320, 240, f5 * 0.6, -angle5);
 
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
