@@ -37,6 +37,38 @@ double hat(double t) {
     }
 }
 
+class Parameters {
+public:
+    virtual ~Parameters() = default;
+
+    virtual uint32_t get_rectangle_color(double time) const = 0;
+    virtual double get_rectangle_deformation(double time) const = 0;
+    virtual double get_rectangle_rotation(double time) const = 0;
+
+    virtual double get_triangle_deformation(double time) const = 0;
+    virtual double get_triangle_rotation(double time) const = 0;
+};
+
+inline uint8_t get_red(uint32_t rgba) {
+    return (rgba & 0xff000000u) >> 24;
+}
+
+inline uint8_t get_green(uint32_t rgba) {
+    return (rgba & 0x00ff0000u) >> 16;
+}
+
+inline uint8_t get_blue(uint32_t rgba) {
+    return (rgba & 0x0000ff00u) >> 8;
+}
+
+inline uint8_t get_alpha(uint32_t rgba) {
+    return rgba & 0x000000ffu;
+}
+
+inline uint32_t get_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    return (r << 24) | (g << 16) | (b << 8) | a;
+}
+
 class Item {
 public:
     explicit Item(SDL_Renderer *renderer, int width, int height)
@@ -110,7 +142,7 @@ public:
         Item::render();
         SDL_SetRenderDrawColor(get_renderer(), 255, 0, 0, 255);
         const double radius = 10.0 * sin(2 * M_PI * time / period) + 40.0;
-        filledCircleRGBA(get_renderer(), 50, 50, radius, 100, 100, 100, SDL_ALPHA_OPAQUE);
+        filledCircleRGBA(get_renderer(), 50, 50, static_cast<Sint16>(radius), 100, 100, 100, SDL_ALPHA_OPAQUE);
     }
 
 private:
@@ -119,51 +151,61 @@ private:
 
 class Rectangle : public Item {
 public:
-    Rectangle(SDL_Renderer *renderer, double period)
+    Rectangle(SDL_Renderer *renderer, const Parameters &params)
       : Item(renderer, 100, 100),
-        period(period)
+        params(&params)
     { }
 
     void render(double time) const {
         Item::render();
-        const uint8_t color = 127 * sawtooth(time / 5000) + 128;
-        SDL_SetRenderDrawColor(get_renderer(), color, color, 0, SDL_ALPHA_OPAQUE);
-        const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
-        const double height = -5.0 * sin(2 * M_PI * time / period) + 30.0;
-        SDL_Rect r = { (100 - width) / 2, (100 - height) / 2, width, height };
+        const uint32_t color = params->get_rectangle_color(time);
+        SDL_SetRenderDrawColor(get_renderer(), get_red(color), get_green(color), get_blue(color), get_alpha(color));
+        const double deformation = params->get_rectangle_deformation(time);
+        const double current_width = 60.0 * (1.0 + deformation);
+        const double current_height = 30.0 * (1.0 - deformation);
+        SDL_Rect r = { static_cast<int>((100 - current_width) / 2),
+                       static_cast<int>((100 - current_height) / 2),
+                       static_cast<int>(current_width),
+                       static_cast<int>(current_height) };
         SDL_RenderFillRect(get_renderer(), &r);
     }
 
 private:
-    double period;
+    const Parameters *params;
 };
 
 class Triangle : public Item {
 public:
-    Triangle(SDL_Renderer *renderer, double period)
+    Triangle(SDL_Renderer *renderer, const Parameters &params)
       : Item(renderer, 100, 100),
-        period(period)
+        params(&params)
     { }
 
     void render(double time) const {
         Item::render();
         SDL_SetRenderDrawColor(get_renderer(), 255, 0, 0, 255);
-        const double width = 10.0 * sin(2 * M_PI * time / period) + 60.0;
-        const double height = -10.0 * sin(2 * M_PI * time / period) + 60.0;
-        filledTrigonRGBA(get_renderer(), 50 - width / 2, 50 + height / 2, 50 + width / 2, 50 + height / 2, 50, 50 - height / 2, 255, 0, 0, 255);
+        const double deformation = params->get_triangle_deformation(time);
+        const double width = 60.0 * (1.0 + deformation);
+        const double height = 60.0 * (1.0 - deformation);
+        filledTrigonRGBA(get_renderer(),
+                         static_cast<Sint16>(50 - width / 2), static_cast<Sint16>(50 + height / 2),
+                         static_cast<Sint16>(50 + width / 2), static_cast<Sint16>(50 + height / 2),
+                         50, static_cast<Sint16>(50 - height / 2),
+                         255, 0, 0, 255);
     }
 
 private:
+    const Parameters *params;
     double period;
 };
 
 class RectangleCircle : public Item {
 public:
-    RectangleCircle(SDL_Renderer *renderer, double period)
+    RectangleCircle(SDL_Renderer *renderer, const Parameters &params, double period)
       : Item(renderer, 500, 500),
-        rectangle(renderer, period * 2.0 / 3.0),
-        triangle(renderer, period * 3.0 / 4.0),
-        period(period)
+        params(&params),
+        rectangle(renderer, params),
+        triangle(renderer, params)
     { }
 
     void render(double time) {
@@ -173,17 +215,18 @@ public:
         for (int i = 0; i < 6; ++i) {
             const double x = 250.0 + 150.0 * cos(2 * M_PI * i / 6.0);
             const double y = 250.0 + 150.0 * sin(2 * M_PI * i / 6.0);
-            const double alpha = 360.0 * i / 6.0 + 180.0 * sawtooth(time / 4000);
-            rectangle.blit_to(get_texture(), x, y, 1.0, alpha);
+            const double alpha = 360.0 * i / 6.0 + params->get_rectangle_rotation(time);
+            rectangle.blit_to(get_texture(), static_cast<int>(x), static_cast<int>(y), 1.0, alpha);
 
             const double x1 = 250.0 + 150.0 * cos(2 * M_PI * (i + 0.5) / 6.0);
             const double y1 = 250.0 + 150.0 * sin(2 * M_PI * (i + 0.5) / 6.0);
-            const double alpha1 = 360.0 * (i + 0.5) / 6.0 + 180.0 * sawtooth(time / 3000);
-            triangle.blit_to(get_texture(), x1, y1, 1.0, alpha1);
+            const double alpha1 = 360.0 * (i + 0.5) / 6.0 + params->get_triangle_rotation(time);
+            triangle.blit_to(get_texture(), static_cast<int>(x1), static_cast<int>(y1), 1.0, alpha1);
         }
     }
 
 private:
+    const Parameters *params;
     Rectangle rectangle;
     Triangle triangle;
     double period;
@@ -203,13 +246,37 @@ public:
         for (int i = 0; i < 12; ++i) {
             const double x = 250.0 + 150.0 * cos(2 * M_PI * i / 12.0);
             const double y = 250.0 + 150.0 * sin(2 * M_PI * i / 12.0);
-            circle.blit_to(get_texture(), x, y, 0.3, 0.0);
+            circle.blit_to(get_texture(), static_cast<int>(x), static_cast<int>(y), 0.3, 0.0);
         }
     }
 
 private:
     Circle circle;
     double period;
+};
+
+class ParametersImpl : public Parameters {
+public:
+    uint32_t get_rectangle_color(double time) const override {
+        uint8_t component = static_cast<uint8_t>(127.0 * sawtooth(time / 5000) + 128.0);
+        return get_rgba(component, component, 0, SDL_ALPHA_OPAQUE);
+    }
+
+    double get_rectangle_deformation(double time) const override {
+        return sin(2 * M_PI * time / (2 * 2000.0 / 3)) / 6.0;
+    }
+
+    double get_rectangle_rotation(double time) const override {
+        return 180.0 * sawtooth(time / 4000);
+    }
+
+    double get_triangle_deformation(double time) const override {
+        return sin(2 * M_PI * time / (3 * 2000.0 / 4)) / 6.0;
+    }
+
+    double get_triangle_rotation(double time) const override {
+        return 180.0 * sawtooth(time / 3000);
+    }
 };
 
 std::vector<uint32_t> probe_texture(SDL_Renderer *renderer, SDL_Texture *texture, int width, int height) {
@@ -238,7 +305,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    RectangleCircle rectangles(renderer, 2000);
+    ParametersImpl params;
+    RectangleCircle rectangles(renderer, params, 2000);
     Circles circles(renderer, 2500);
 
     SDL_Event e;
