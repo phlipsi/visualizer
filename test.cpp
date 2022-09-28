@@ -87,9 +87,11 @@ int main(int argc, char * argv[])
 
     glUseProgram(program);
 
-    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
     glClearColor(0.5, 0.0, 0.0, 0.0);
     glViewport(0, 0, width, height);
+    //glViewport(-1, -1, 1, 1);
 
     GLuint vao, vbo;
 
@@ -101,33 +103,40 @@ int main(int argc, char * argv[])
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
     glEnableVertexAttribArray(ATTRIBUTE_COLOR);
 
-    glVertexAttribPointer(ATTRIBUTE_COLOR, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(4 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_COLOR, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void *)(4 * sizeof(float)));
 
-    const GLfloat g_vertex_buffer_data[] = {
-    /*  R, G, B, A, X, Y  */
-        1, 0, 0, 1, 0, 0,
-        0, 1, 0, 1, width, 0,
-        0, 0, 1, 1, width, height,
+    GLfloat g_vertex_buffer_data[] = {
+    /*  R, G, B, A,     X,     Y,     Z */
+        1, 0, 0, 1, -1.0f, -1.0f, 2.0f,
+        0, 1, 0, 1,  1.0f, -1.0f, 2.0f,
+        0, 0, 1, 1,  0.0f,  1.0f, 2.0f,
 
-        1, 0, 0, 1, 0, 0,
-        0, 0, 1, 1, width, height,
-        1, 1, 1, 1, 0, height
+        1, 1, 1, 1, -1.0f, -1.0f,  1.5f,
+        1, 1, 1, 1,  0.0f, -1.0f,  1.5f,
+        1, 1, 1, 1, -1.0f,  1.0f,  1.5f
     };
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
 
-    const GLfloat projection[4 * 4] = {
+    /*const GLfloat projection[4 * 4] = {
          2.0f / width,  0.0f,           0.0f,          0.0f,
          0.0f,         -2.0f / height,  0.0f,          0.0f,
          0.0f,          0.0f,          -2.0f / 100.0f, 0.0f,
         -1.0f,          1.0f,          -1.0f,          1.0f
+    };*/
+    const GLfloat f = 10.0f;
+    const GLfloat projection[4 * 4] = {
+         1.0f, 0.0f,               0.0f, 0.0f,
+         0.0f, 1.0f,               0.0f, 0.0f,
+         0.0f, 0.0f,  (f + 1) / (f - 1), 1.0f,
+         0.0f, 0.0f, -2.0 * f / (f - 1), 0.0f
     };
-    glUniformMatrix4fv(glGetUniformLocation(program, "u_projection_matrix"), 1, GL_FALSE, projection);
+    glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, projection);
 
     bool quit = false;
     while (!quit) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         SDL_Event event;
         while(SDL_PollEvent(&event))
@@ -144,6 +153,10 @@ int main(int argc, char * argv[])
                     break;
             }
         }
+
+        const long ticks = SDL_GetTicks();
+        g_vertex_buffer_data[34] = 1.0f * sin(ticks / 2000.0) + 1.5f;
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 6);
