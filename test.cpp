@@ -10,75 +10,18 @@
     Compile and run with: gcc opengl3_hello.c `sdl2-config --libs --cflags` -lGL -Wall && ./a.out
 */
 
-#define GL_GLEXT_PROTOTYPES
-
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 
 #include <stdio.h>
 #include <string.h>
 
-typedef float t_mat4x4[16];
+#include <vertex.h>
+#include <fragment.h>
 
-static inline void mat4x4_ortho(t_mat4x4 out, float left, float right, float bottom, float top, float znear, float zfar)
-{
-    #define T(a, b) (a * 4 + b)
-
-    out[T(0,0)] = 2.0f / (right - left);
-    out[T(0,1)] = 0.0f;
-    out[T(0,2)] = 0.0f;
-    out[T(0,3)] = 0.0f;
-
-    out[T(1,1)] = 2.0f / (top - bottom);
-    out[T(1,0)] = 0.0f;
-    out[T(1,2)] = 0.0f;
-    out[T(1,3)] = 0.0f;
-
-    out[T(2,2)] = -2.0f / (zfar - znear);
-    out[T(2,0)] = 0.0f;
-    out[T(2,1)] = 0.0f;
-    out[T(2,3)] = 0.0f;
-
-    out[T(3,0)] = -(right + left) / (right - left);
-    out[T(3,1)] = -(top + bottom) / (top - bottom);
-    out[T(3,2)] = -(zfar + znear) / (zfar - znear);
-    out[T(3,3)] = 1.0f;
-
-    #undef T
-}
-
-static const char * vertex_shader = R"(
-#version 130
-in vec2 i_position;
-in vec4 i_color;
-
-out vec4 v_color;
-
-uniform mat4 u_projection_matrix;
-
-void main() {
-    v_color = i_color;
-    gl_Position = u_projection_matrix * vec4(i_position, 0.0, 1.0);
-}
-)";
-
-static const char * fragment_shader = R"(
-#version 130
-in vec4 v_color;
-
-out vec4 o_color;
-
-void main() {
-    o_color = v_color;
-}
-)";
-
-typedef enum t_attrib_id
-{
-    attrib_position,
-    attrib_color
-} t_attrib_id;
+const int ATTRIBUTE_POSITION = 0;
+const int ATTRIBUTE_COLOR = 1;
 
 int main(int argc, char * argv[])
 {
@@ -109,8 +52,9 @@ int main(int argc, char * argv[])
     vs = glCreateShader(GL_VERTEX_SHADER);
     fs = glCreateShader(GL_FRAGMENT_SHADER);
 
-    int length = strlen(vertex_shader);
-    glShaderSource(vs, 1, (const GLchar **)&vertex_shader, &length);
+    const GLchar *const vertex_shaders[] = { vertex };
+    const GLint vertex_shader_lengths[] = { sizeof(vertex) - 1 };
+    glShaderSource(vs, 1, vertex_shaders, vertex_shader_lengths);
     glCompileShader(vs);
 
     GLint status;
@@ -121,8 +65,9 @@ int main(int argc, char * argv[])
         return 1;
     }
 
-    length = strlen(fragment_shader);
-    glShaderSource(fs, 1, (const GLchar **)&fragment_shader, &length);
+    const GLchar *const fragment_shaders[] = { fragment };
+    const GLint fragment_shader_lengths[] = { sizeof(fragment) - 1 };
+    glShaderSource(fs, 1, fragment_shaders, fragment_shader_lengths);
     glCompileShader(fs);
 
     glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
@@ -136,8 +81,8 @@ int main(int argc, char * argv[])
     glAttachShader(program, vs);
     glAttachShader(program, fs);
 
-    glBindAttribLocation(program, attrib_position, "i_position");
-    glBindAttribLocation(program, attrib_color, "i_color");
+    glBindAttribLocation(program, ATTRIBUTE_POSITION, "i_position");
+    glBindAttribLocation(program, ATTRIBUTE_COLOR, "i_color");
     glLinkProgram(program);
 
     glUseProgram(program);
@@ -153,11 +98,11 @@ int main(int argc, char * argv[])
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glEnableVertexAttribArray(attrib_position);
-    glEnableVertexAttribArray(attrib_color);
+    glEnableVertexAttribArray(ATTRIBUTE_POSITION);
+    glEnableVertexAttribArray(ATTRIBUTE_COLOR);
 
-    glVertexAttribPointer(attrib_color, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-    glVertexAttribPointer(attrib_position, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(4 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_COLOR, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(4 * sizeof(float)));
 
     const GLfloat g_vertex_buffer_data[] = {
     /*  R, G, B, A, X, Y  */
@@ -172,7 +117,7 @@ int main(int argc, char * argv[])
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-    const float projection[4 * 4] = {
+    const GLfloat projection[4 * 4] = {
          2.0f / width,  0.0f,           0.0f,          0.0f,
          0.0f,         -2.0f / height,  0.0f,          0.0f,
          0.0f,          0.0f,          -2.0f / 100.0f, 0.0f,
