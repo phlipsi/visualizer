@@ -6,3 +6,6 @@ conan_basic_setup(TARGETS)
 
 add_executable(visualizer visualizer.cpp)
 target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::sdl2_gfx)
+
+add_executable(test test.cpp)
+target_link_libraries(test PRIVATE CONAN_PKG::sdl CONAN_PKG::glew)

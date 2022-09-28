@@ -1,6 +1,7 @@
 [requires]
 sdl/2.24.0
 sdl2_gfx/1.0.4
+glew/2.2.0
 
 [generators]
 cmake
