@@ -20,6 +20,9 @@
 #include <vertex.h>
 #include <fragment.h>
 
+#include "shader.h"
+#include "program.h"
+
 const int ATTRIBUTE_POSITION = 0;
 const int ATTRIBUTE_COLOR = 1;
 
@@ -47,45 +50,16 @@ int main(int argc, char * argv[])
     if (GLEW_OK != glewInit()) {
         return 1;
     }
-    GLuint vs, fs, program;
 
-    vs = glCreateShader(GL_VERTEX_SHADER);
-    fs = glCreateShader(GL_FRAGMENT_SHADER);
-
-    const GLchar *const vertex_shaders[] = { vertex };
-    const GLint vertex_shader_lengths[] = { sizeof(vertex) - 1 };
-    glShaderSource(vs, 1, vertex_shaders, vertex_shader_lengths);
-    glCompileShader(vs);
-
-    GLint status;
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
-    if(status == GL_FALSE)
-    {
-        fprintf(stderr, "vertex shader compilation failed\n");
-        return 1;
-    }
-
-    const GLchar *const fragment_shaders[] = { fragment };
-    const GLint fragment_shader_lengths[] = { sizeof(fragment) - 1 };
-    glShaderSource(fs, 1, fragment_shaders, fragment_shader_lengths);
-    glCompileShader(fs);
-
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
-    if(status == GL_FALSE)
-    {
-        fprintf(stderr, "fragment shader compilation failed\n");
-        return 1;
-    }
-
-    program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-
-    glBindAttribLocation(program, ATTRIBUTE_POSITION, "i_position");
-    glBindAttribLocation(program, ATTRIBUTE_COLOR, "i_color");
-    glLinkProgram(program);
-
-    glUseProgram(program);
+    Shader vertex_shader(GL_VERTEX_SHADER, vertex);
+    Shader fragment_shader(GL_FRAGMENT_SHADER, fragment);
+    Program program;
+    program.attach(std::move(vertex_shader));
+    program.attach(std::move(fragment_shader));
+    program.bind(ATTRIBUTE_POSITION, "i_position");
+    program.bind(ATTRIBUTE_COLOR, "i_color");
+    program.link();
+    program.use();
 
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_DEPTH_TEST);
@@ -130,9 +104,9 @@ int main(int argc, char * argv[])
          1.0f, 0.0f,               0.0f, 0.0f,
          0.0f, 1.0f,               0.0f, 0.0f,
          0.0f, 0.0f,  (f + 1) / (f - 1), 1.0f,
-         0.0f, 0.0f, -2.0 * f / (f - 1), 0.0f
+         0.0f, 0.0f, -2.0f * f / (f - 1), 0.0f
     };
-    glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, projection);
+    glUniformMatrix4fv(program.get_uniform_location("projection"), 1, GL_FALSE, projection);
 
     bool quit = false;
     while (!quit) {
@@ -155,7 +129,7 @@ int main(int argc, char * argv[])
         }
 
         const long ticks = SDL_GetTicks();
-        g_vertex_buffer_data[34] = 1.0f * sin(ticks / 2000.0) + 1.5f;
+        g_vertex_buffer_data[34] = 1.0f * sinf(ticks / 2000.0f) + 1.5f;
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
         glBindVertexArray(vao);
