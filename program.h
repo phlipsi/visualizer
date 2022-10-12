@@ -3,6 +3,7 @@
 #include "shader.h"
 
 #include <GL/glew.h>
+#include <glm/mat4x4.hpp>
 
 #include <stdexcept>
 
@@ -21,7 +22,8 @@ public:
     void link() const;
     void use() const;
 
-    GLint get_uniform_location(const GLchar *name) const;
+    void set_uniform(const char *name, const glm::mat4x4 &m, bool transpose = false) const;
+    void set_uniform(const char *name, const glm::mat2x4 &m, bool transpose = false) const;
 
     Program(const Program &) = delete;
     Program &operator = (const Program &) = delete;

@@ -13,6 +13,10 @@
 #include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <glm/mat4x4.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <stdio.h>
 #include <string.h>
@@ -82,31 +86,19 @@ int main(int argc, char * argv[])
 
     GLfloat g_vertex_buffer_data[] = {
     /*  R, G, B, A,     X,     Y,     Z */
-        1, 0, 0, 1, -1.0f, -1.0f, 2.0f,
-        0, 1, 0, 1,  1.0f, -1.0f, 2.0f,
-        0, 0, 1, 1,  0.0f,  1.0f, 2.0f,
+        1, 0, 0, 1, -1.0f, -1.0f, -5.0f,
+        0, 1, 0, 1,  1.0f, -1.0f, -5.0f,
+        0, 0, 1, 1,  0.0f,  1.0f, -5.0f,
 
-        1, 1, 1, 1, -1.0f, -1.0f,  1.5f,
-        1, 1, 1, 1,  0.0f, -1.0f,  1.5f,
-        1, 1, 1, 1, -1.0f,  1.0f,  1.5f
+        1, 1, 0, 1, -1.0f, -1.0f,  -4.0f,
+        1, 0, 1, 1,  0.0f, -1.0f,  -4.0f,
+        0, 1, 1, 1, -1.0f,  1.0f,  -4.0f
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
 
-    /*const GLfloat projection[4 * 4] = {
-         2.0f / width,  0.0f,           0.0f,          0.0f,
-         0.0f,         -2.0f / height,  0.0f,          0.0f,
-         0.0f,          0.0f,          -2.0f / 100.0f, 0.0f,
-        -1.0f,          1.0f,          -1.0f,          1.0f
-    };*/
-    const GLfloat f = 10.0f;
-    const GLfloat projection[4 * 4] = {
-         1.0f, 0.0f,               0.0f, 0.0f,
-         0.0f, 1.0f,               0.0f, 0.0f,
-         0.0f, 0.0f,  (f + 1) / (f - 1), 1.0f,
-         0.0f, 0.0f, -2.0f * f / (f - 1), 0.0f
-    };
-    glUniformMatrix4fv(program.get_uniform_location("projection"), 1, GL_FALSE, projection);
+    glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+    program.set_uniform("projection", projection2);
 
     bool quit = false;
     while (!quit) {
@@ -129,7 +121,7 @@ int main(int argc, char * argv[])
         }
 
         const long ticks = SDL_GetTicks();
-        g_vertex_buffer_data[34] = 1.0f * sinf(ticks / 2000.0f) + 1.5f;
+        g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
         glBindVertexArray(vao);

@@ -1,5 +1,7 @@
 #include "program.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include <vector>
 
 Program::Exception::Exception(const char *message)
@@ -41,6 +43,10 @@ void Program::use() const {
     glUseProgram(id);
 }
 
-GLint Program::get_uniform_location(const GLchar *name) const {
-    return glGetUniformLocation(id, name);
+void Program::set_uniform(const char *name, const glm::mat4x4 &m, bool transpose) const {
+    glUniformMatrix4fv(glGetUniformLocation(id, name), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(m));
+}
+
+void Program::set_uniform(const char *name, const glm::mat2x4 &m, bool transpose) const {
+    glUniformMatrix4fv(glGetUniformLocation(id, name), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(m));
 }
