@@ -81,24 +81,28 @@ int main(int argc, char * argv[])
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
     glEnableVertexAttribArray(ATTRIBUTE_COLOR);
 
-    glVertexAttribPointer(ATTRIBUTE_COLOR, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void *)(4 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(3 * sizeof(float)));
 
     GLfloat g_vertex_buffer_data[] = {
-    /*  R, G, B, A,     X,     Y,     Z */
-        1, 0, 0, 1, -1.0f, -1.0f, -5.0f,
-        0, 1, 0, 1,  1.0f, -1.0f, -5.0f,
-        0, 0, 1, 1,  0.0f,  1.0f, -5.0f,
+    /*  R, G, B,     X,     Y,     Z */
+        1, 0, 0, -1.0f, -1.0f, 0.0f,
+        0, 1, 0,  1.0f, -1.0f, 0.0f,
+        0, 0, 1,  0.0f,  1.0f, 0.0f,
 
-        1, 1, 0, 1, -1.0f, -1.0f,  -4.0f,
-        1, 0, 1, 1,  0.0f, -1.0f,  -4.0f,
-        0, 1, 1, 1, -1.0f,  1.0f,  -4.0f
+        1, 1, 0, -1.0f, -1.0f,  0.0f,
+        1, 0, 1,  0.0f, -1.0f,  0.0f,
+        0, 1, 1, -1.0f,  1.0f,  0.0f
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
 
     glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
     program.set_uniform("projection", projection2);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+    program.set_uniform("view", view);
 
     bool quit = false;
     while (!quit) {
@@ -121,11 +125,21 @@ int main(int argc, char * argv[])
         }
 
         const long ticks = SDL_GetTicks();
-        g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
+        //g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
+        //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glm::mat4 model = glm::mat4(1.0);
+        model = glm::translate(model, glm::vec3(0, 0, -5));
+        program.set_uniform("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        model = glm::mat4(1.0);
+        float t = -2.0f * sinf(2 * M_PI * ticks / 2000.0) - 4.0;
+        model = glm::translate(model, glm::vec3(0, 0, t));
+        program.set_uniform("model", model);
+        glDrawArrays(GL_TRIANGLES, 3, 6);
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);
