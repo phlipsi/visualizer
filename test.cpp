@@ -26,9 +26,11 @@
 
 #include "shader.h"
 #include "program.h"
+#include "texture.h"
 
 const int ATTRIBUTE_POSITION = 0;
 const int ATTRIBUTE_COLOR = 1;
+const int ATTRIBUTE_TEXTURE_COORD = 2;
 
 int main(int argc, char * argv[])
 {
@@ -62,6 +64,7 @@ int main(int argc, char * argv[])
     program.attach(std::move(fragment_shader));
     program.bind(ATTRIBUTE_POSITION, "i_position");
     program.bind(ATTRIBUTE_COLOR, "i_color");
+    program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     program.link();
     program.use();
 
@@ -73,6 +76,18 @@ int main(int argc, char * argv[])
 
     GLuint vao, vbo;
 
+    Texture texture;
+    {
+        auto binding = texture.bind(GL_TEXTURE_2D);
+        binding.set_parameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+        binding.set_parameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+        binding.set_parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        binding.set_parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        unsigned char texture_data[] = { 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00,
+                                         0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00 };
+        binding.image_2d(0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data);
+    }
+
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
@@ -80,19 +95,21 @@ int main(int argc, char * argv[])
 
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
     glEnableVertexAttribArray(ATTRIBUTE_COLOR);
+    glEnableVertexAttribArray(ATTRIBUTE_TEXTURE_COORD);
 
-    glVertexAttribPointer(ATTRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
 
     GLfloat g_vertex_buffer_data[] = {
-    /*  R, G, B,     X,     Y,     Z */
-        1, 0, 0, -1.0f, -1.0f, 0.0f,
-        0, 1, 0,  1.0f, -1.0f, 0.0f,
-        0, 0, 1,  0.0f,  1.0f, 0.0f,
+    /*  R, G, B,     X,     Y,    Z,    S,    T */
+        1, 0, 0, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+        0, 1, 0,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        0, 0, 1,  0.0f,  1.0f, 0.0f, 0.5f, 0.0f,
 
-        1, 1, 0, -1.0f, -1.0f,  0.0f,
-        1, 0, 1,  0.0f, -1.0f,  0.0f,
-        0, 1, 1, -1.0f,  1.0f,  0.0f
+        1, 1, 0, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+        1, 0, 1,  0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        0, 1, 1, -1.0f,  1.0f, 0.0f, 1.0f, 0.0f
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
@@ -128,6 +145,8 @@ int main(int argc, char * argv[])
         //g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
         //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
+        glActiveTexture(GL_TEXTURE0);
+        auto binding = texture.bind(GL_TEXTURE_2D);
         glBindVertexArray(vao);
 
         glm::mat4 model = glm::mat4(1.0);

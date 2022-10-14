@@ -9,5 +9,6 @@ add_subdirectory(shader)
 add_executable(visualizer visualizer.cpp)
 target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::sdl2_gfx)
 
-add_executable(test test.cpp shader.cpp shader.h program.h program.cpp)
+add_executable(test test.cpp shader.cpp shader.h program.h program.cpp texture.h texture.cpp)
 target_link_libraries(test PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm shader)
+target_compile_features(test PRIVATE cxx_std_17)
