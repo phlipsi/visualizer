@@ -14,6 +14,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -177,6 +178,9 @@ int main(int argc, char * argv[])
     view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
     program.set_uniform("view", view);
 
+    glm::vec3 light{ 0.0f, 0.0f, 0.0f };
+    program.set_uniform("light", light);
+
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     bool quit = false;
@@ -199,7 +203,6 @@ int main(int argc, char * argv[])
             }
         }
 
-        const long ticks = SDL_GetTicks();
         //g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
         //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
 
@@ -207,10 +210,13 @@ int main(int argc, char * argv[])
         auto binding = texture.bind(GL_TEXTURE_2D);
         glBindVertexArray(vao);
 
+        int x, y;
+        SDL_GetMouseState(&x, &y);
+
         glm::mat4 model = glm::mat4(1.0);
         model = glm::translate(model, glm::vec3(0, 0, -5));
-        model = glm::rotate(model, glm::radians(360.0f * ticks / 3000.0f), glm::vec3(1, 0, 0));
-        model = glm::rotate(model, glm::radians(360.0f * ticks / 2000.0f), glm::vec3(0, 1, 0));
+        model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
+        model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
         program.set_uniform("model", model);
         glDrawArrays(GL_TRIANGLES, 0, sizeof(box_vertices));
 
