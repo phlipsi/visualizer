@@ -70,11 +70,11 @@ int main(int argc, char * argv[])
 
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_DEPTH_TEST);
-    glClearColor(0.5, 0.0, 0.0, 0.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
     glViewport(0, 0, width, height);
     //glViewport(-1, -1, 1, 1);
 
-    GLuint vao, vbo;
+    GLuint vao, vbo, ebo;
 
     Texture texture;
     {
@@ -92,6 +92,8 @@ int main(int argc, char * argv[])
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
     glEnableVertexAttribArray(ATTRIBUTE_COLOR);
@@ -100,6 +102,48 @@ int main(int argc, char * argv[])
     glVertexAttribPointer(ATTRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
     glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
     glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
+    //      (6++-)   (7+++)
+    //           *--------*
+    //          /|       /|
+    //   (4+--)/ |(5+-+)/ |
+    //        *--------*  |
+    //        |  *-----|--*
+    //        | /(2-+-)| /(3-++)
+    //        |/       |/
+    //        *--------*
+    //        (0---)   (1--+)
+
+    GLfloat box_vertices[] = {
+         /* R, G, B,  X      Y      Z     S     T  */
+            1, 0, 0, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (0---)
+            0, 1, 0, -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (1--+)
+            1, 1, 0, -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (2-+-)
+            0, 0, 1, -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (3-++)
+
+            1, 0, 1,  0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (4+--)
+            0, 1, 1,  0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (5+-+)
+            1, 1, 1,  0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (6++-)
+            0, 0, 0,  0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (7+++)
+    };
+    unsigned int box_triangles[] = {
+        0, 1, 5, // front
+        0, 5, 4,
+
+        0, 1, 3, // bottom
+        0, 3, 2,
+
+        0, 2, 6, // left
+        0, 6, 4,
+
+        1, 3, 7, // right
+        1, 7, 5,
+
+        4, 5, 7, // top
+        4, 7, 6,
+
+        2, 3, 7, // back
+        2, 7, 6
+    };
 
     GLfloat g_vertex_buffer_data[] = {
     /*  R, G, B,     X,     Y,    Z,    S,    T */
@@ -112,7 +156,8 @@ int main(int argc, char * argv[])
         0, 1, 1, -1.0f,  1.0f, 0.0f, 1.0f, 0.0f
     };
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertices), box_vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(box_triangles), box_triangles, GL_STATIC_DRAW);
 
     glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
     program.set_uniform("projection", projection2);
@@ -120,6 +165,8 @@ int main(int argc, char * argv[])
     glm::mat4 view = glm::mat4(1.0f);
     view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
     program.set_uniform("view", view);
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     bool quit = false;
     while (!quit) {
@@ -151,14 +198,10 @@ int main(int argc, char * argv[])
 
         glm::mat4 model = glm::mat4(1.0);
         model = glm::translate(model, glm::vec3(0, 0, -5));
+        model = glm::rotate(model, glm::radians(360.0f * ticks / 3000.0f), glm::vec3(1, 0, 0));
+        model = glm::rotate(model, glm::radians(360.0f * ticks / 2000.0f), glm::vec3(0, 1, 0));
         program.set_uniform("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        model = glm::mat4(1.0);
-        float t = -2.0f * sinf(2 * M_PI * ticks / 2000.0) - 4.0;
-        model = glm::translate(model, glm::vec3(0, 0, t));
-        program.set_uniform("model", model);
-        glDrawArrays(GL_TRIANGLES, 3, 6);
+        glDrawElements(GL_TRIANGLES, sizeof(box_triangles), GL_UNSIGNED_INT, nullptr);
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);
