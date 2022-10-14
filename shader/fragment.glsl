@@ -1,4 +1,5 @@
 #version 130
+in vec3 v_normal;
 in vec2 v_texture_coord;
 
 out vec4 o_color;

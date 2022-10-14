@@ -29,6 +29,7 @@
 #include "texture.h"
 
 const int ATTRIBUTE_POSITION = 0;
+const int ATTRIBUTE_NORMAL = 1;
 const int ATTRIBUTE_TEXTURE_COORD = 2;
 
 int main(int argc, char * argv[])
@@ -62,6 +63,7 @@ int main(int argc, char * argv[])
     program.attach(std::move(vertex_shader));
     program.attach(std::move(fragment_shader));
     program.bind(ATTRIBUTE_POSITION, "i_position");
+    program.bind(ATTRIBUTE_NORMAL, "i_normal");
     program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     program.link();
     program.use();
@@ -72,7 +74,7 @@ int main(int argc, char * argv[])
     glViewport(0, 0, width, height);
     //glViewport(-1, -1, 1, 1);
 
-    GLuint vao, vbo, ebo;
+    GLuint vao, vbo;
 
     Texture texture;
     {
@@ -90,59 +92,83 @@ int main(int argc, char * argv[])
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
+    glEnableVertexAttribArray(ATTRIBUTE_NORMAL);
     glEnableVertexAttribArray(ATTRIBUTE_TEXTURE_COORD);
 
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(0 * sizeof(float)));
-    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(3 * sizeof(float)));
-    //      (6++-)   (7+++)
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(0 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
+    //       (++-)    (+++)
     //           *--------*
     //          /|       /|
-    //   (4+--)/ |(5+-+)/ |
+    //    (+--)/ | (+-+)/ |
     //        *--------*  |
     //        |  *-----|--*
-    //        | /(2-+-)| /(3-++)
+    //        | /(-+-) | /(-++)
     //        |/       |/
     //        *--------*
-    //        (0---)   (1--+)
+    //        (---)    (--+)
+    //    x
+    //    |  y
+    //    | /
+    //    |/
+    //    +-----z
+
 
     GLfloat box_vertices[] = {
-         /*  X      Y      Z     S     T  */
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (0---)
-            -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (1--+)
-            -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (2-+-)
-            -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (3-++)
+         /*  X      Y      Z      NX     NY     NZ    S     T  */
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // front
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
 
-             0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (4+--)
-             0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (5+-+)
-             0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (6++-)
-             0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (7+++)
-    };
-    unsigned int box_triangles[] = {
-        0, 1, 5, // front
-        0, 5, 4,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
 
-        0, 1, 3, // bottom
-        0, 3, 2,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, // back
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
 
-        0, 2, 6, // left
-        0, 6, 4,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
 
-        1, 3, 7, // right
-        1, 7, 5,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // left
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
 
-        4, 5, 7, // top
-        4, 7, 6,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
 
-        2, 3, 7, // back
-        2, 7, 6
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // right
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
+
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+
+             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // top
+             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+
+             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertices), box_vertices, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(box_triangles), box_triangles, GL_STATIC_DRAW);
 
     glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
     program.set_uniform("projection", projection2);
@@ -186,7 +212,7 @@ int main(int argc, char * argv[])
         model = glm::rotate(model, glm::radians(360.0f * ticks / 3000.0f), glm::vec3(1, 0, 0));
         model = glm::rotate(model, glm::radians(360.0f * ticks / 2000.0f), glm::vec3(0, 1, 0));
         program.set_uniform("model", model);
-        glDrawElements(GL_TRIANGLES, sizeof(box_triangles), GL_UNSIGNED_INT, nullptr);
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(box_vertices));
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);
