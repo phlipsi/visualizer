@@ -29,7 +29,6 @@
 #include "texture.h"
 
 const int ATTRIBUTE_POSITION = 0;
-const int ATTRIBUTE_COLOR = 1;
 const int ATTRIBUTE_TEXTURE_COORD = 2;
 
 int main(int argc, char * argv[])
@@ -63,7 +62,6 @@ int main(int argc, char * argv[])
     program.attach(std::move(vertex_shader));
     program.attach(std::move(fragment_shader));
     program.bind(ATTRIBUTE_POSITION, "i_position");
-    program.bind(ATTRIBUTE_COLOR, "i_color");
     program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     program.link();
     program.use();
@@ -96,12 +94,10 @@ int main(int argc, char * argv[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
     glEnableVertexAttribArray(ATTRIBUTE_POSITION);
-    glEnableVertexAttribArray(ATTRIBUTE_COLOR);
     glEnableVertexAttribArray(ATTRIBUTE_TEXTURE_COORD);
 
-    glVertexAttribPointer(ATTRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
-    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(0 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(3 * sizeof(float)));
     //      (6++-)   (7+++)
     //           *--------*
     //          /|       /|
@@ -114,16 +110,16 @@ int main(int argc, char * argv[])
     //        (0---)   (1--+)
 
     GLfloat box_vertices[] = {
-         /* R, G, B,  X      Y      Z     S     T  */
-            1, 0, 0, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (0---)
-            0, 1, 0, -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (1--+)
-            1, 1, 0, -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (2-+-)
-            0, 0, 1, -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (3-++)
+         /*  X      Y      Z     S     T  */
+            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (0---)
+            -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (1--+)
+            -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (2-+-)
+            -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (3-++)
 
-            1, 0, 1,  0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (4+--)
-            0, 1, 1,  0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (5+-+)
-            1, 1, 1,  0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (6++-)
-            0, 0, 0,  0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (7+++)
+             0.5f, -0.5f, -0.5f, 0.0f, 0.0f, // (4+--)
+             0.5f, -0.5f,  0.5f, 1.0f, 0.0f, // (5+-+)
+             0.5f,  0.5f, -0.5f, 0.0f, 1.0f, // (6++-)
+             0.5f,  0.5f,  0.5f, 1.0f, 1.0f, // (7+++)
     };
     unsigned int box_triangles[] = {
         0, 1, 5, // front
@@ -143,17 +139,6 @@ int main(int argc, char * argv[])
 
         2, 3, 7, // back
         2, 7, 6
-    };
-
-    GLfloat g_vertex_buffer_data[] = {
-    /*  R, G, B,     X,     Y,    Z,    S,    T */
-        1, 0, 0, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-        0, 1, 0,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        0, 0, 1,  0.0f,  1.0f, 0.0f, 0.5f, 0.0f,
-
-        1, 1, 0, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-        1, 0, 1,  0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-        0, 1, 1, -1.0f,  1.0f, 0.0f, 1.0f, 0.0f
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertices), box_vertices, GL_STATIC_DRAW);
