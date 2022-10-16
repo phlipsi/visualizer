@@ -25,8 +25,13 @@
 #include <vertex.h>
 #include <fragment.h>
 
+#include <screen_vertex.h>
+#include <screen_fragment.h>
+
+#include "framebuffer.h"
 #include "shader.h"
 #include "program.h"
+#include "renderbuffer.h"
 #include "texture.h"
 
 const int ATTRIBUTE_POSITION = 0;
@@ -170,7 +175,45 @@ int main(int argc, char * argv[])
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertices), box_vertices, GL_STATIC_DRAW);
+    glBindVertexArray(0);
 
+    Shader screen_vertex_shader(GL_VERTEX_SHADER, screen_vertex);
+    Shader screen_fragment_shader(GL_FRAGMENT_SHADER, screen_fragment);
+    Program screen_program;
+    screen_program.attach(std::move(screen_vertex_shader));
+    screen_program.attach(std::move(screen_fragment_shader));
+    screen_program.bind(ATTRIBUTE_POSITION, "i_position");
+    screen_program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
+    screen_program.link();
+    screen_program.set_uniform("width", static_cast<GLfloat>(width));
+    screen_program.set_uniform("height", static_cast<GLfloat>(height));
+
+    GLfloat screen_vertices[] = {
+    /*   X      Y     S     T    */
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+         1.0f, -1.0f, 1.0f, 0.0f
+    };
+
+    GLuint screen_vao, screen_vbo;
+    glGenVertexArrays(1, &screen_vao);
+    glGenBuffers(1, &screen_vbo);
+    glBindVertexArray(screen_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, screen_vbo);
+
+    glEnableVertexAttribArray(ATTRIBUTE_POSITION);
+    glEnableVertexAttribArray(ATTRIBUTE_TEXTURE_COORD);
+
+    glVertexAttribPointer(ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(0 * sizeof(float)));
+    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(2 * sizeof(float)));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
+    glBindVertexArray(0);
+
+    program.use();
     glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
     program.set_uniform("projection", projection2);
 
@@ -183,10 +226,30 @@ int main(int argc, char * argv[])
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    Framebuffer framebuffer;
+    Texture destination;
+    {
+        auto binding = destination.bind(GL_TEXTURE_2D);
+        binding.image_2d(0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        binding.set_parameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        binding.set_parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+    Renderbuffer depth_stencil;
+    {
+        auto binding = depth_stencil.bind(GL_RENDERBUFFER);
+        binding.storage(GL_DEPTH24_STENCIL8, width, height);
+    }
+    {
+        auto binding = framebuffer.bind(GL_FRAMEBUFFER);
+        binding.attach(GL_COLOR_ATTACHMENT0, destination, 0);
+        binding.attach(GL_DEPTH_STENCIL_ATTACHMENT, depth_stencil);
+        if (binding.get_status() != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("Framebuffer not complete");
+        }
+    }
+
     bool quit = false;
     while (!quit) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
@@ -203,22 +266,34 @@ int main(int argc, char * argv[])
             }
         }
 
-        //g_vertex_buffer_data[34] = 2.0f * sinf(ticks / 2000.0f) - 4.0f;
-        //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
-
-        glActiveTexture(GL_TEXTURE0);
-        auto binding = texture.bind(GL_TEXTURE_2D);
-        glBindVertexArray(vao);
-
         int x, y;
         SDL_GetMouseState(&x, &y);
+        {
+            auto binding = framebuffer.bind(GL_FRAMEBUFFER);
+            glEnable(GL_DEPTH_TEST);
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 model = glm::mat4(1.0);
-        model = glm::translate(model, glm::vec3(0, 0, -5));
-        model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
-        model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
-        program.set_uniform("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(box_vertices));
+            program.use();
+            glActiveTexture(GL_TEXTURE0);
+            auto texture_binding = texture.bind(GL_TEXTURE_2D);
+            glBindVertexArray(vao);
+            glm::mat4 model = glm::mat4(1.0);
+            model = glm::translate(model, glm::vec3(0, 0, -5));
+            model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
+            model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
+            program.set_uniform("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, sizeof(box_vertices));
+        }
+
+        glDisable(GL_DEPTH_TEST);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        screen_program.use();
+        glBindVertexArray(screen_vao);
+        auto destination_texture_binding = destination.bind(GL_TEXTURE_2D);
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(screen_vertices));
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);

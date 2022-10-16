@@ -56,3 +56,11 @@ void Program::set_uniform(const char *name, const glm::mat2x4 &m, bool transpose
 void Program::set_uniform(const char *name, const glm::vec3 &v) const {
     glUniform3fv(glGetUniformLocation(id, name), 1, glm::value_ptr(v));
 }
+
+void Program::set_uniform(const char *name, GLint x) const {
+    glUniform1i(glGetUniformLocation(id, name), x);
+}
+
+void Program::set_uniform(const char *name, GLfloat x) const {
+    glUniform1f(glGetUniformLocation(id, name), x);
+}

@@ -25,6 +25,8 @@ public:
     void set_uniform(const char *name, const glm::mat4x4 &m, bool transpose = false) const;
     void set_uniform(const char *name, const glm::mat2x4 &m, bool transpose = false) const;
     void set_uniform(const char *name, const glm::vec3 &v) const;
+    void set_uniform(const char *name, GLint x) const;
+    void set_uniform(const char *name, GLfloat x) const;
 
     Program(const Program &) = delete;
     Program &operator = (const Program &) = delete;
