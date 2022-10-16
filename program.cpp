@@ -25,18 +25,20 @@ void Program::bind(GLuint index, const GLchar *name) const {
 
 void Program::attach(Shader &&shader) const {
     glAttachShader(id, shader.get_id());
-
-    //GLint status;
-    //glGetProgramiv(id, GL_LINK_STATUS, &status);
-    //if (status == GL_FALSE) {
-    //    std::vector<char> buffer(512);
-    //    glGetProgramInfoLog(id, 512, NULL, buffer.data());
-    //    throw Exception(buffer.data());
-    //}
 }
 
 void Program::link() const {
     glLinkProgram(id);
+
+    GLint status;
+    glGetProgramiv(id, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint length;
+        glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> buffer(length);
+        glGetProgramInfoLog(id, length, NULL, buffer.data());
+        throw Exception(buffer.data());
+    }
 }
 
 void Program::use() const {

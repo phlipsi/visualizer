@@ -1,5 +1,6 @@
 #include "shader.h"
 
+#include <cstring>
 #include <vector>
 
 Shader::Exception::Exception(const char *message)
@@ -18,8 +19,10 @@ Shader::Shader(GLenum type, const char *source)
     GLint status;
     glGetShaderiv(id, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE) {
-        std::vector<char> buffer(512);
-        glGetShaderInfoLog(id, 512, NULL, buffer.data());
+        GLint length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> buffer(length);
+        glGetShaderInfoLog(id, length, NULL, buffer.data());
         throw Exception(buffer.data());
     }
 }

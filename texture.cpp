@@ -23,8 +23,6 @@ void Texture::Binding::image_2d(GLint level, GLint internalformat,
     }
 }
 
-Texture::Binding::Binding(Binding &&b) : target(std::move(b.target)) { }
-
 void Texture::Binding::set_parameter(GLenum pname, GLint param) const {
     if (target) {
         glTexParameteri(*target, pname, param);

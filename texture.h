@@ -8,10 +8,7 @@ class Texture {
 public:
     class Binding {
     public:
-        Binding(GLenum target, const Texture &texture);
         ~Binding();
-
-        Binding(Binding &&);
 
         void image_2d(GLint level, GLint internalformat, GLsizei width,
                       GLsizei height, GLint border, GLenum format,
@@ -23,6 +20,9 @@ public:
         Binding &operator = (const Binding &) = delete;
         Binding &operator = (Binding &&) = delete;
     private:
+        friend class Texture;
+        Binding(GLenum target, const Texture &texture);
+
         std::optional<GLenum> target;
     };
 
@@ -30,6 +30,8 @@ public:
     ~Texture();
 
     Binding bind(GLenum target);
+
+    GLuint get_id() const { return id; }
 
     Texture(const Texture &) = delete;
     Texture &operator = (const Texture &) = delete;
