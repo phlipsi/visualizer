@@ -43,6 +43,6 @@ Texture::~Texture() {
     glDeleteTextures(1, &id);
 }
 
-Texture::Binding Texture::bind(GLenum target) {
+Texture::Binding Texture::bind(GLenum target) const {
     return Binding(target, *this);
 }

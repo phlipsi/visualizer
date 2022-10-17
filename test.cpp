@@ -28,6 +28,8 @@
 #include <screen_vertex.h>
 #include <screen_fragment.h>
 
+#include "cube.h"
+#include "destination.h"
 #include "framebuffer.h"
 #include "shader.h"
 #include "program.h"
@@ -70,11 +72,12 @@ int main(int argc, char * argv[])
     Program program;
     program.attach(std::move(vertex_shader));
     program.attach(std::move(fragment_shader));
-    program.bind(ATTRIBUTE_POSITION, "i_position");
-    program.bind(ATTRIBUTE_NORMAL, "i_normal");
-    program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
+    program.bind(Cube::ATTRIBUTE_POSITION, "i_position");
+    program.bind(Cube::ATTRIBUTE_NORMAL, "i_normal");
+    program.bind(Cube::ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     program.link();
     program.use();
+    Cube cube;
 
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_DEPTH_TEST);
@@ -94,123 +97,17 @@ int main(int argc, char * argv[])
         binding.image_2d(0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data);
     }
 
-    //       (++-)    (+++)
-    //           *--------*
-    //          /|       /|
-    //    (+--)/ | (+-+)/ |
-    //        *--------*  |
-    //        |  *-----|--*
-    //        | /(-+-) | /(-++)
-    //        |/       |/
-    //        *--------*
-    //        (---)    (--+)
-    //    x
-    //    |  y
-    //    | /
-    //    |/
-    //    +-----z
-    GLfloat box_vertices[] = {
-        /*  X      Y      Z      NX     NY     NZ    S     T  */
-           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // front
-           -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-
-           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-
-           -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f, // back
-           -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-
-           -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-
-           -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // left
-           -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
-
-           -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
-
-           -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // right
-           -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-
-           -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
-
-           -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom
-           -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-           -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-
-           -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-           -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-           -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // top
-            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-    };
-
-    VertexArray cube;
-    Buffer vertices;
-    {
-        auto binding = cube.bind();
-        binding.enable_attribute(ATTRIBUTE_POSITION);
-        binding.enable_attribute(ATTRIBUTE_NORMAL);
-        binding.enable_attribute(ATTRIBUTE_TEXTURE_COORD);
-
-        auto buffer_binding = binding.bind(GL_ARRAY_BUFFER, vertices);
-        buffer_binding.buffer_data(sizeof(box_vertices), box_vertices, GL_STATIC_DRAW);
-
-        buffer_binding.vertex_attrib_pointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(0 * sizeof(float)));
-        buffer_binding.vertex_attrib_pointer(ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
-        buffer_binding.vertex_attrib_pointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
-    }
-
     Shader screen_vertex_shader(GL_VERTEX_SHADER, screen_vertex);
     Shader screen_fragment_shader(GL_FRAGMENT_SHADER, screen_fragment);
     Program screen_program;
     screen_program.attach(std::move(screen_vertex_shader));
     screen_program.attach(std::move(screen_fragment_shader));
-    screen_program.bind(ATTRIBUTE_POSITION, "i_position");
-    screen_program.bind(ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
+    screen_program.bind(Destination::ATTRIBUTE_POSITION, "i_position");
+    screen_program.bind(Destination::ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     screen_program.link();
     screen_program.set_uniform("width", static_cast<GLfloat>(width));
     screen_program.set_uniform("height", static_cast<GLfloat>(height));
-
-    GLfloat screen_vertices[] = {
-    /*   X      Y     S     T    */
-        -1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f, 1.0f,
-         1.0f,  1.0f, 1.0f, 1.0f,
-
-        -1.0f, -1.0f, 0.0f, 0.0f,
-         1.0f,  1.0f, 1.0f, 1.0f,
-         1.0f, -1.0f, 1.0f, 0.0f
-    };
-
-    GLuint screen_vao, screen_vbo;
-    glGenVertexArrays(1, &screen_vao);
-    glGenBuffers(1, &screen_vbo);
-    glBindVertexArray(screen_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, screen_vbo);
-
-    glEnableVertexAttribArray(ATTRIBUTE_POSITION);
-    glEnableVertexAttribArray(ATTRIBUTE_TEXTURE_COORD);
-
-    glVertexAttribPointer(ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(0 * sizeof(float)));
-    glVertexAttribPointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(2 * sizeof(float)));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(screen_vertices), screen_vertices, GL_STATIC_DRAW);
-    glBindVertexArray(0);
+    Destination destination(width, height);
 
     program.use();
     glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
@@ -224,28 +121,6 @@ int main(int argc, char * argv[])
     program.set_uniform("light", light);
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    Framebuffer framebuffer;
-    Texture destination;
-    {
-        auto binding = destination.bind(GL_TEXTURE_2D);
-        binding.image_2d(0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        binding.set_parameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        binding.set_parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    Renderbuffer depth_stencil;
-    {
-        auto binding = depth_stencil.bind(GL_RENDERBUFFER);
-        binding.storage(GL_DEPTH24_STENCIL8, width, height);
-    }
-    {
-        auto binding = framebuffer.bind(GL_FRAMEBUFFER);
-        binding.attach(GL_COLOR_ATTACHMENT0, destination, 0);
-        binding.attach(GL_DEPTH_STENCIL_ATTACHMENT, depth_stencil);
-        if (binding.get_status() != GL_FRAMEBUFFER_COMPLETE) {
-            throw std::runtime_error("Framebuffer not complete");
-        }
-    }
 
     bool quit = false;
     while (!quit) {
@@ -268,21 +143,20 @@ int main(int argc, char * argv[])
         int x, y;
         SDL_GetMouseState(&x, &y);
         {
-            auto binding = framebuffer.bind(GL_FRAMEBUFFER);
+            auto binding = destination.bind_as_target();
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             program.use();
-            glActiveTexture(GL_TEXTURE0);
-            auto texture_binding = texture.bind(GL_TEXTURE_2D);
-            auto vao_binding = cube.bind();
             glm::mat4 model = glm::mat4(1.0);
             model = glm::translate(model, glm::vec3(0, 0, -5));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
             program.set_uniform("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, sizeof(box_vertices));
+            glActiveTexture(GL_TEXTURE0);
+            auto texture_binding = texture.bind(GL_TEXTURE_2D);
+            cube.draw();
         }
 
         glDisable(GL_DEPTH_TEST);
@@ -290,9 +164,7 @@ int main(int argc, char * argv[])
         glClear(GL_COLOR_BUFFER_BIT);
 
         screen_program.use();
-        glBindVertexArray(screen_vao);
-        auto destination_texture_binding = destination.bind(GL_TEXTURE_2D);
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(screen_vertices));
+        destination.draw();
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);

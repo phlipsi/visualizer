@@ -25,6 +25,10 @@ add_executable(test
     vertexarray.cpp
     buffer.h
     buffer.cpp
+    cube.h
+    cube.cpp
+    destination.h
+    destination.cpp
 )
 target_link_libraries(test PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm shader)
 target_compile_features(test PRIVATE cxx_std_17)

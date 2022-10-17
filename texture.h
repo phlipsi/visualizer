@@ -29,7 +29,7 @@ public:
     Texture();
     ~Texture();
 
-    Binding bind(GLenum target);
+    Binding bind(GLenum target) const;
 
     GLuint get_id() const { return id; }
 

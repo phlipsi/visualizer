@@ -38,7 +38,7 @@ public:
     VertexArray();
     ~VertexArray();
 
-    Binding bind();
+    Binding bind() const;
 
     VertexArray(const VertexArray &) = delete;
     VertexArray &operator = (const VertexArray &) = delete;
