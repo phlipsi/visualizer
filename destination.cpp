@@ -24,10 +24,10 @@ Destination::Destination(GLsizei width, GLsizei height) {
         binding.enable_attribute(ATTRIBUTE_POSITION);
         binding.enable_attribute(ATTRIBUTE_TEXTURE_COORD);
 
-        auto buffer_binding = binding.bind(GL_ARRAY_BUFFER, screen_vertices);
-        buffer_binding.vertex_attrib_pointer(ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(0 * sizeof(float)));
-        buffer_binding.vertex_attrib_pointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(2 * sizeof(float)));
-        buffer_binding.buffer_data(sizeof(screen_vertex_data), screen_vertex_data, GL_STATIC_DRAW);
+        auto buffer_binding = screen_vertices.bind(GL_ARRAY_BUFFER);
+        buffer_binding.vertex_attrib_pointer(binding, ATTRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(0 * sizeof(float)));
+        buffer_binding.vertex_attrib_pointer(binding, ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void *)(2 * sizeof(float)));
+        buffer_binding.data(sizeof(screen_vertex_data), screen_vertex_data, GL_STATIC_DRAW);
     }
     {
         auto binding = destination.bind(GL_TEXTURE_2D);

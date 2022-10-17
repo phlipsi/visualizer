@@ -80,12 +80,12 @@ Cube::Cube() {
     binding.enable_attribute(ATTRIBUTE_NORMAL);
     binding.enable_attribute(ATTRIBUTE_TEXTURE_COORD);
 
-    auto buffer_binding = binding.bind(GL_ARRAY_BUFFER, vertices);
-    buffer_binding.buffer_data(sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+    auto buffer_binding = vertices.bind(GL_ARRAY_BUFFER);
+    buffer_binding.data(sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
 
-    buffer_binding.vertex_attrib_pointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(0 * sizeof(float)));
-    buffer_binding.vertex_attrib_pointer(ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
-    buffer_binding.vertex_attrib_pointer(ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
+    buffer_binding.vertex_attrib_pointer(binding, ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(0 * sizeof(float)));
+    buffer_binding.vertex_attrib_pointer(binding, ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float)));
+    buffer_binding.vertex_attrib_pointer(binding, ATTRIBUTE_TEXTURE_COORD, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(6 * sizeof(float)));
 }
 
 void Cube::draw() const {
