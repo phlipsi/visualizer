@@ -21,6 +21,10 @@ add_executable(test
     framebuffer.cpp
     renderbuffer.h
     renderbuffer.cpp
+    vertexarray.h
+    vertexarray.cpp
+    buffer.h
+    buffer.cpp
 )
 target_link_libraries(test PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm shader)
 target_compile_features(test PRIVATE cxx_std_17)
