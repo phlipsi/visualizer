@@ -10,6 +10,9 @@ add_subdirectory(engine)
 add_executable(visualizer visualizer.cpp)
 target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::sdl2_gfx)
 
+add_executable(visualizer2 visualizer2.cpp)
+target_link_libraries(visualizer2 PRIVATE engine CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm shader)
+
 add_executable(test
     test.cpp
     cube.h
