@@ -28,15 +28,16 @@
 #include <screen_vertex.h>
 #include <screen_fragment.h>
 
+#include <framebuffer.h>
+#include <shader.h>
+#include <program.h>
+#include <renderbuffer.h>
+#include <texture.h>
+#include <vertexarray.h>
+#include <buffer.h>
+
 #include "cube.h"
 #include "destination.h"
-#include "framebuffer.h"
-#include "shader.h"
-#include "program.h"
-#include "renderbuffer.h"
-#include "texture.h"
-#include "vertexarray.h"
-#include "buffer.h"
 
 const int ATTRIBUTE_POSITION = 0;
 const int ATTRIBUTE_NORMAL = 1;
@@ -173,7 +174,7 @@ int main(int argc, char * argv[])
 
             auto usage = screen_program.use();
             const long ticks = SDL_GetTicks();
-            const float gamma = 2 * M_PI * ticks / 10000.0f;
+            const float gamma = 2 * static_cast<float>(M_PI) * ticks / 10000.0f;
             usage.set_uniform("gamma", gamma);
             destination.draw();
         }

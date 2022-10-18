@@ -1,7 +1,7 @@
 #pragma once
 
-#include "buffer.h"
-#include "vertexarray.h"
+#include <buffer.h>
+#include <vertexarray.h>
 
 class Cube {
 public:

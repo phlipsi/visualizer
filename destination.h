@@ -1,10 +1,10 @@
 #pragma once
 
-#include "buffer.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "texture.h"
-#include "vertexarray.h"
+#include <buffer.h>
+#include <framebuffer.h>
+#include <renderbuffer.h>
+#include <texture.h>
+#include <vertexarray.h>
 
 #include <stdexcept>
 
