@@ -105,12 +105,17 @@ int main(int argc, char * argv[])
     screen_program.bind(Destination::ATTRIBUTE_POSITION, "i_position");
     screen_program.bind(Destination::ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     screen_program.link();
-    screen_program.set_uniform("width", static_cast<GLfloat>(width));
-    screen_program.set_uniform("height", static_cast<GLfloat>(height));
+    screen_program.use();
+    glm::mat2 projection = glm::mat2(
+        1.0f, 0.0f,
+        0.0f, static_cast<float>(width) / height
+    );
+    screen_program.set_uniform("projection", projection);
+    screen_program.set_uniform("alpha", glm::radians(30.0f));
     Destination destination(width, height);
 
     program.use();
-    glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+    glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), 1.0f/*static_cast<float>(width) / static_cast<float>(height)*/, 0.1f, 100.0f);
     program.set_uniform("projection", projection2);
 
     glm::mat4 view = glm::mat4(1.0f);
@@ -150,7 +155,7 @@ int main(int argc, char * argv[])
 
             program.use();
             glm::mat4 model = glm::mat4(1.0);
-            model = glm::translate(model, glm::vec3(0, 0, -5));
+            model = glm::translate(model, glm::vec3(1.0, 0, -5));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
             program.set_uniform("model", model);
