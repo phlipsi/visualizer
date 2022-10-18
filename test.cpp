@@ -76,7 +76,6 @@ int main(int argc, char * argv[])
     program.bind(Cube::ATTRIBUTE_NORMAL, "i_normal");
     program.bind(Cube::ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     program.link();
-    program.use();
     Cube cube;
 
     glEnable(GL_DEPTH_TEST);
@@ -105,25 +104,29 @@ int main(int argc, char * argv[])
     screen_program.bind(Destination::ATTRIBUTE_POSITION, "i_position");
     screen_program.bind(Destination::ATTRIBUTE_TEXTURE_COORD, "i_texture_coord");
     screen_program.link();
-    screen_program.use();
-    glm::mat2 projection = glm::mat2(
-        1.0f, 0.0f,
-        0.0f, static_cast<float>(width) / height
-    );
-    screen_program.set_uniform("projection", projection);
-    screen_program.set_uniform("alpha", glm::radians(30.0f));
+    {
+        auto usage = screen_program.use();
+
+        glm::mat2 projection = glm::mat2(
+            1.0f, 0.0f,
+            0.0f, static_cast<float>(width) / height
+        );
+        usage.set_uniform("projection", projection);
+        usage.set_uniform("alpha", glm::radians(30.0f));
+    }
     Destination destination(width, height);
+    {
+        auto usage = program.use();
+        glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), 1.0f/*static_cast<float>(width) / static_cast<float>(height)*/, 0.1f, 100.0f);
+        usage.set_uniform("projection", projection2);
 
-    program.use();
-    glm::mat4 projection2 = glm::perspective(glm::radians(45.0f), 1.0f/*static_cast<float>(width) / static_cast<float>(height)*/, 0.1f, 100.0f);
-    program.set_uniform("projection", projection2);
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+        usage.set_uniform("view", view);
 
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
-    program.set_uniform("view", view);
-
-    glm::vec3 light{ 0.0f, 0.0f, 0.0f };
-    program.set_uniform("light", light);
+        glm::vec3 light{ 0.0f, 0.0f, 0.0f };
+        usage.set_uniform("light", light);
+    }
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -153,26 +156,27 @@ int main(int argc, char * argv[])
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            program.use();
+            auto usage = program.use();
             glm::mat4 model = glm::mat4(1.0);
             model = glm::translate(model, glm::vec3(1.0, 0, -5));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
-            program.set_uniform("model", model);
+            usage.set_uniform("model", model);
             glActiveTexture(GL_TEXTURE0);
             auto texture_binding = texture.bind(GL_TEXTURE_2D);
             cube.draw();
         }
+        {
+            glDisable(GL_DEPTH_TEST);
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        glDisable(GL_DEPTH_TEST);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        screen_program.use();
-        const long ticks = SDL_GetTicks();
-        const float gamma = 2 * M_PI * ticks / 10000.0f;
-        screen_program.set_uniform("gamma", gamma);
-        destination.draw();
+            auto usage = screen_program.use();
+            const long ticks = SDL_GetTicks();
+            const float gamma = 2 * M_PI * ticks / 10000.0f;
+            usage.set_uniform("gamma", gamma);
+            destination.draw();
+        }
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1);
