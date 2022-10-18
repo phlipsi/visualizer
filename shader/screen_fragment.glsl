@@ -5,6 +5,7 @@ in vec2 v_texture_coord;
 
 uniform sampler2D screen_texture;
 uniform float alpha;
+uniform float gamma;
 
 const float offset = 1.0 / 300.0;
 
@@ -41,7 +42,7 @@ float triangle_wave(float x) {
 vec2 kaleidoscope(vec2 pos) {
     pos = 2 * pos - vec2(1.0, 1.0);
     float r = length(pos);
-    float beta = atan(pos.x, pos.y);
+    float beta = atan(pos.x, pos.y) + gamma;
     beta = alpha * triangle_wave(beta / (2.0 * alpha));
     return 0.5 * vec2(r * cos(beta) + 1.0, r * sin(beta) + 1.0);
 }

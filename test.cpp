@@ -169,6 +169,9 @@ int main(int argc, char * argv[])
         glClear(GL_COLOR_BUFFER_BIT);
 
         screen_program.use();
+        const long ticks = SDL_GetTicks();
+        const float gamma = 2 * M_PI * ticks / 10000.0f;
+        screen_program.set_uniform("gamma", gamma);
         destination.draw();
 
         SDL_GL_SwapWindow(window);
