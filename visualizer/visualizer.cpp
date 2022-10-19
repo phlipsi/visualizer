@@ -10,11 +10,8 @@
 
 #include <iostream>
 
-#include <vertex.h>
-#include <fragment.h>
-
-#include <scene_vertex.h>
-#include <scene_fragment.h>
+#include <scene.vert.h>
+#include <scene.frag.h>
 
 #include <buffer.h>
 #include <shader.h>
@@ -23,12 +20,12 @@
 
 GLfloat triangle_vertices[] = {
 /*   X      Y                   Z     NX    NY    NZ    R     G     B  */
-/*    -0.5f, -sqrtf(5.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     0.5f, -sqrtf(5.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     0.0f,  sqrtf(5.0f) / 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f*/
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    -0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     0.0f,  sqrtf(3.0f) / 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f
+    /*-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
      0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f
+     0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f*/
 };
 
 class Triangle {
@@ -129,8 +126,8 @@ int main(int argc, char *argv[]) {
     }
 
     Program scene_shader;
-    scene_shader.attach(Shader(GL_VERTEX_SHADER, scene_vertex));
-    scene_shader.attach(Shader(GL_FRAGMENT_SHADER, scene_fragment));
+    scene_shader.attach(Shader(GL_VERTEX_SHADER, scene_vertex_shader));
+    scene_shader.attach(Shader(GL_FRAGMENT_SHADER, scene_fragment_shader));
     scene_shader.bind(0, "position");
     scene_shader.bind(1, "normal");
     scene_shader.bind(2, "color");
@@ -151,8 +148,8 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
-    //Triangle triangle;
-    Rectangle rectangle;
+    Triangle triangle;
+    //Rectangle rectangle;
 
     bool quit = false;
     while (!quit) {
@@ -182,11 +179,11 @@ int main(int argc, char *argv[]) {
             glm::mat4 model(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
             model = glm::rotate(model, 2 * static_cast<float>(M_PI) * ticks / 4000.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-            model = glm::scale(model, glm::vec3(0.25f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, -0.25f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, 1.0f));
+            //model = glm::scale(model, glm::vec3(0.2f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, -0.1f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, 1.0f));
 
             usage.set_uniform("model", model);
-            //triangle.draw();
-            rectangle.draw();
+            triangle.draw();
+            //rectangle.draw();
         }
 
         SDL_GL_SwapWindow(window);

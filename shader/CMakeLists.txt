@@ -15,6 +15,3 @@ generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/vertex.glsl")
 generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/fragment.glsl")
 generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/screen_vertex.glsl")
 generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/screen_fragment.glsl")
-
-generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/scene_vertex.glsl")
-generate_shader_header("${CMAKE_CURRENT_SOURCE_DIR}/scene_fragment.glsl")
