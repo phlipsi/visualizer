@@ -14,6 +14,10 @@ void Buffer::Binding::data(GLsizeiptr size, const void *data, GLenum usage) cons
     glBufferData(target, size, data, usage);
 }
 
+void Buffer::Binding::subdata(GLintptr offset, GLsizeiptr size, const void *data) const {
+    glBufferSubData(target, offset, size, data);
+}
+
 void Buffer::Binding::vertex_attrib_pointer(const VertexArray::Binding &vao, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer) const {
     glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }

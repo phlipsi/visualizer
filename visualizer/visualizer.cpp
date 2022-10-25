@@ -4,6 +4,7 @@
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,44 +19,126 @@
 #include <program.h>
 #include <vertexarray.h>
 
+#include "batch.h"
+
 GLfloat triangle_vertices[] = {
 /*   X      Y                   Z     NX    NY    NZ    R     G     B  */
     -0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
      0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
      0.0f,  sqrtf(3.0f) / 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f
-    /*-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f*/
 };
 
-class Triangle {
+class Object {
 public:
-    Triangle() {
-        auto binding = vao.bind();
-        binding.enable_attribute(0);
-        binding.enable_attribute(1);
-        binding.enable_attribute(2);
+    virtual ~Object() = default;
+    virtual void draw(Batch &batch, const glm::mat4 &model) const = 0;
+};
 
-        auto buffer_binding = vertices.bind(GL_ARRAY_BUFFER);
-        buffer_binding.data(sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+class Triangle : public Object {
+public:
+    Triangle() : vertices(-0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 1.0f,
+                           0.5f, -sqrtf(3.0f) / 6.0f, 0.0f, 1.0f,
+                           0.0f,  sqrtf(3.0f) / 3.0f, 0.0f, 1.0f,
+                           0.0f,  0.0f,               0.0f, 1.0f)
+    { }
 
-        buffer_binding.vertex_attrib_pointer(binding, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void *)(0 * sizeof(float)));
-        buffer_binding.vertex_attrib_pointer(binding, 1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void *)(3 * sizeof(float)));
-        buffer_binding.vertex_attrib_pointer(binding, 2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void *)(6 * sizeof(float)));
-    }
-
-    void draw() const {
-        auto binding = vao.bind();
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(triangle_vertices));
+    void draw(Batch &batch, const glm::mat4 &model) const override {
+        batch.add_triangle(model * vertices, glm::vec3(1.0f, 1.0f, 0.0), 0.0f);
     }
 
 private:
-    VertexArray vao;
-    Buffer vertices;
+    glm::mat4 vertices;
+};
+
+class Rectangle : public Object {
+public:
+    Rectangle() : top_left(-0.5f, -0.5f, 0.0f, 1.0f,
+                            0.5f,  0.5f, 0.0f, 1.0f,
+                           -0.5f,  0.5f, 0.0f, 1.0f,
+                            0.0f,  0.0f, 0.0f, 1.0f),
+                  bottom_right(-0.5f, -0.5f, 0.0f, 1.0f,
+                                0.5f, -0.5f, 0.0f, 1.0f,
+                                0.5f,  0.5f, 0.0f, 1.0f,
+                                0.0f, 0.0f, 0.0f, 1.0f)
+    { }
+
+    void draw(Batch &batch, const glm::mat4 &model) const override {
+        batch.add_triangle(model * top_left, glm::vec3(1.0f, 0.0f, 0.0), 0.0f);
+        batch.add_triangle(model * bottom_right, glm::vec3(1.0f, 0.0f, 0.0), 0.0f);
+    }
+
+private:
+    glm::mat4 top_left;
+    glm::mat4 bottom_right;
+};
+
+class Transform : public Object {
+public:
+    explicit Transform(std::shared_ptr<Object> object) : object(object) { }
+
+    void draw(Batch &batch, const glm::mat4& model) const override {
+        object->draw(batch, model * get_transformation());
+    }
+
+private:
+    std::shared_ptr<Object> object;
+
+    virtual glm::mat4 get_transformation() const = 0;
+};
+
+class Scale : public Transform {
+public:
+    Scale(std::shared_ptr<Object> object, float factor) : Transform(object), factor(factor) { }
+
+private:
+    float factor;
+
+    glm::mat4 get_transformation() const override {
+        return glm::scale(glm::mat4{ 1.0f }, glm::vec3(factor, factor, 1.0));
+    }
+};
+
+class Rotate : public Transform {
+public:
+    Rotate(std::shared_ptr<Object> object, const float &angle) : Transform(object), angle(&angle) { }
+
+private:
+    const float *angle;
+
+    glm::mat4 get_transformation() const override {
+        return glm::rotate(glm::mat4{ 1.0f }, glm::radians(*angle), glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+};
+
+class Ring : public Object {
+public:
+    Ring(int num_repetitions, float radius, const std::initializer_list<std::shared_ptr<Object>> & objects)
+      : num_repetitions(num_repetitions),
+        radius(radius),
+        objects(objects)
+    { }
+
+    void draw(Batch &batch, const glm::mat4 &model) const override {
+        const int num_objects = objects.size();
+        const float angle = 360.0f / (num_repetitions * num_objects);
+        for (int i = 0; i < num_repetitions; ++i) {
+            for (int j = 0; j < num_objects; j++) {
+                glm::mat4 rotation = model;
+                rotation = glm::rotate(rotation, glm::radians(angle * (j + num_objects * i)), glm::vec3(0.0f, 0.0f, 1.0f));
+                rotation = glm::translate(rotation, glm::vec3(0.0f, radius, 0.0f));
+                objects[j]->draw(batch, rotation);
+            }
+        }
+    }
+
+private:
+    int num_repetitions;
+    float radius;
+    std::vector<std::shared_ptr<Object>> objects;
 };
 
 GLfloat rectangle_vertices[] = {
-/*   X      Y                   Z     NX    NY    NZ    R     G     B  */
+/*   X      Y     Z     NX    NY    NZ    R     G     B  */
     -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
      0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
     -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
@@ -66,7 +149,7 @@ GLfloat rectangle_vertices[] = {
 };
 
 
-class Rectangle {
+/*class Rectangle {
 public:
     Rectangle() {
         auto binding = vao.bind();
@@ -90,7 +173,7 @@ public:
 private:
     VertexArray vao;
     Buffer vertices;
-};
+};*/
 
 int main(int argc, char *argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -128,9 +211,9 @@ int main(int argc, char *argv[]) {
     Program scene_shader;
     scene_shader.attach(Shader(GL_VERTEX_SHADER, scene_vertex_shader));
     scene_shader.attach(Shader(GL_FRAGMENT_SHADER, scene_fragment_shader));
-    scene_shader.bind(0, "position");
-    scene_shader.bind(1, "normal");
-    scene_shader.bind(2, "color");
+    scene_shader.bind(Batch::ATTRIBUTE_POSITION, "position");
+    scene_shader.bind(Batch::ATTRIBUTE_COLOR, "color");
+    scene_shader.bind(Batch::ATTRIBUTE_GLOW, "glow");
     scene_shader.link();
     {
         auto usage = scene_shader.use();
@@ -148,7 +231,15 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
-    Triangle triangle;
+    float angle = 0.0f;
+    std::shared_ptr<Object> o1 = std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Triangle>(), 0.3f), angle);
+    std::shared_ptr<Object> o2 = std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Rectangle>(), 0.3f), angle);
+    auto objects = std::make_shared<Ring>(6, 1.0f, { o1, o2 });
+    Ring ring(6, 1.0f, { std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Triangle>(), 0.3f), angle), std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Rectangle>(), 0.3f), angle) });
+    //ring.add_object(std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Triangle>(), 0.3f), angle));
+    //ring.add_object(std::make_shared<Rotate>(std::make_shared<Scale>(std::make_shared<Rectangle>(), 0.3f), angle));
+    //Triangle triangle;
+    Batch batch;
     //Rectangle rectangle;
 
     bool quit = false;
@@ -179,11 +270,12 @@ int main(int argc, char *argv[]) {
             glm::mat4 model(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
             model = glm::rotate(model, 2 * static_cast<float>(M_PI) * ticks / 4000.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+            angle = -360.0f * ticks / 2000.0f;
             //model = glm::scale(model, glm::vec3(0.2f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, -0.1f * sin(2 * M_PI * ticks / 5000.0f) + 1.0f, 1.0f));
-
-            usage.set_uniform("model", model);
-            triangle.draw();
-            //rectangle.draw();
+            batch.clear();
+            //triangle.draw(batch, model);
+            ring.draw(batch, model);
+            batch.draw();
         }
 
         SDL_GL_SwapWindow(window);
