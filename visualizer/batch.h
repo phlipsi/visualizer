@@ -8,6 +8,8 @@
 
 #include <vector>
 
+namespace visualizer {
+
 class Batch {
 public:
     static const int ATTRIBUTE_POSITION;
@@ -28,3 +30,5 @@ private:
 
     std::vector<GLfloat> batch;
 };
+
+}

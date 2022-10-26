@@ -11,6 +11,13 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scene.frag.h"
 add_executable(visualizer
     batch.h
     batch.cpp
+    object.h
+    ring.h
+    ring.cpp
+    shape.h
+    shape.cpp
+    transform.h
+    transform.cpp
     visualizer.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/scene.frag.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/scene.frag"

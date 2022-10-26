@@ -2,6 +2,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include <stdexcept>
+
+namespace visualizer {
+
 namespace {
 
 const std::vector<GLfloat>::size_type CAPACITY = 10000 * 7;
@@ -58,4 +62,6 @@ void Batch::draw() const {
     //void *data = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
     //glUnmapBuffer(GL_ARRAY_BUFFER);
     glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(batch.size()));
+}
+
 }
