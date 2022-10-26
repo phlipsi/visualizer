@@ -27,6 +27,16 @@ private:
     glm::mat4 get_transform(const glm::mat4& model) const override;
 };
 
+class Deform : public Transform {
+public:
+    Deform(std::shared_ptr<Object> object, const float &width, const float &height);
+private:
+    const float *width;
+    const float *height;
+
+    glm::mat4 get_transform(const glm::mat4& model) const override;
+};
+
 class Rotate : public Transform {
 public:
     Rotate(std::shared_ptr<Object> object, const float &angle);

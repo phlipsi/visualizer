@@ -20,6 +20,16 @@ glm::mat4 Scale::get_transform(const glm::mat4 &model) const {
     return glm::scale(model, glm::vec3(*factor, *factor, 1.0f));
 }
 
+Deform::Deform(std::shared_ptr<Object> object, const float &width, const float &height)
+  : Transform(object),
+    width(&width),
+    height(&height)
+{ }
+
+glm::mat4 Deform::get_transform(const glm::mat4& model) const {
+    return glm::scale(model, glm::vec3(*width, *height, 1.0f));
+}
+
 Rotate::Rotate(std::shared_ptr<Object> object, const float &angle)
   : Transform(object),
     angle(&angle)

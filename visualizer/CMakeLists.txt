@@ -12,6 +12,8 @@ add_executable(visualizer
     batch.h
     batch.cpp
     object.h
+    parameter.h
+    parameter.cpp
     ring.h
     ring.cpp
     shape.h
