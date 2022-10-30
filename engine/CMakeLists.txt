@@ -1,6 +1,8 @@
 add_library(engine STATIC
     buffer.h
     buffer.cpp
+    destination.h
+    destination.cpp
     framebuffer.h
     framebuffer.cpp
     program.h

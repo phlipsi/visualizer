@@ -1,10 +1,10 @@
 #pragma once
 
-#include <buffer.h>
-#include <framebuffer.h>
-#include <renderbuffer.h>
-#include <texture.h>
-#include <vertexarray.h>
+#include "buffer.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
+#include "texture.h"
+#include "vertexarray.h"
 
 #include <stdexcept>
 
@@ -25,6 +25,8 @@ public:
     void draw() const;
 
 private:
+    GLsizei width;
+    GLsizei height;
     Framebuffer framebuffer;
     Texture destination;
     Renderbuffer depth_stencil;

@@ -28,6 +28,7 @@
 #include <screen_vertex.h>
 #include <screen_fragment.h>
 
+#include <destination.h>
 #include <framebuffer.h>
 #include <shader.h>
 #include <program.h>

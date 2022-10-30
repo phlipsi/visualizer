@@ -18,7 +18,10 @@ GLfloat screen_vertex_data[] = {
 const int Destination::ATTRIBUTE_POSITION = 0;
 const int Destination::ATTRIBUTE_TEXTURE_COORD = 1;
 
-Destination::Destination(GLsizei width, GLsizei height) {
+Destination::Destination(GLsizei width, GLsizei height)
+  : width(width),
+    height(height)
+{
     {
         auto binding = vao.bind();
         binding.enable_attribute(ATTRIBUTE_POSITION);
@@ -50,6 +53,7 @@ Destination::Destination(GLsizei width, GLsizei height) {
 }
 
 Framebuffer::Binding Destination::bind_as_target() const {
+    glViewport(0, 0, width, height);
     return framebuffer.bind(GL_FRAMEBUFFER);
 }
 
