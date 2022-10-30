@@ -9,7 +9,10 @@
 
 #include <scene.vert.h>
 #include <scene.frag.h>
+#include <screen.vert.h>
+#include <screen.frag.h>
 
+#include <destination.h>
 #include <shader.h>
 #include <program.h>
 
@@ -47,6 +50,7 @@ int main(int argc, char *argv[]) {
 
     static const int width = 800;
     static const int height = 600;
+    static const int size = std::max(width, height);
 
     SDL_Window * window = SDL_CreateWindow("visualizer",
                                            SDL_WINDOWPOS_CENTERED,
@@ -80,6 +84,24 @@ int main(int argc, char *argv[]) {
         glm::vec3 light{ 0.0f, 0.0f, 0.0f };
         usage.set_uniform("light", light);
     }
+
+    Program screen_shader;
+    screen_shader.attach(Shader(GL_VERTEX_SHADER, screen_vertex_shader));
+    screen_shader.attach(Shader(GL_FRAGMENT_SHADER, screen_fragment_shader));
+    screen_shader.bind(Destination::ATTRIBUTE_POSITION, "position");
+    screen_shader.bind(Destination::ATTRIBUTE_TEXTURE_COORD, "texture_coord");
+    screen_shader.link();
+    {
+        auto usage = screen_shader.use();
+
+        glm::mat2 projection = glm::mat2(
+            1.0f, 0.0f,
+            0.0f, 1.0f
+            //0.0f, static_cast<float>(width) / height
+        );
+        usage.set_uniform("projection", projection);
+    }
+    Destination destination(width, height);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -122,6 +144,7 @@ int main(int argc, char *argv[]) {
         }
 
         {
+            auto binding = destination.bind_as_target();
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -133,7 +156,15 @@ int main(int argc, char *argv[]) {
             rotating_ring->draw(batch, model);
             batch.draw();
         }
+        {
+            glDisable(GL_DEPTH_TEST);
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glViewport(0.0f, 0.0f, width, height);
+            glClear(GL_COLOR_BUFFER_BIT);
 
+            auto usage = screen_shader.use();
+            destination.draw();
+        }
         SDL_GL_SwapWindow(window);
     }
 
