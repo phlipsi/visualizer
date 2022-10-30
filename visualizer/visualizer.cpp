@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     scene_shader.link();
     {
         auto usage = scene_shader.use();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / height /*1.0f*/, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
         usage.set_uniform("projection", projection);
 
         glm::mat4 view = glm::mat4(1.0f);
@@ -95,13 +95,12 @@ int main(int argc, char *argv[]) {
         auto usage = screen_shader.use();
 
         glm::mat2 projection = glm::mat2(
-            1.0f, 0.0f,
-            0.0f, 1.0f
-            //0.0f, static_cast<float>(width) / height
+            static_cast<float>(size) / width, 0.0f,
+            0.0f,                             static_cast<float>(size) / height
         );
         usage.set_uniform("projection", projection);
     }
-    Destination destination(width, height);
+    Destination destination(size, size);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
