@@ -7,6 +7,8 @@ add_library(engine STATIC
     framebuffer.cpp
     program.h
     program.cpp
+    quad.h
+    quad.cpp
     renderbuffer.h
     renderbuffer.cpp
     shader.cpp

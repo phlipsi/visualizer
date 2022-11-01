@@ -6,28 +6,30 @@
 
 #include <iostream>
 #include <memory>
+#include <algorithm>
 
 #include <scene.vert.h>
 #include <scene.frag.h>
 #include <screen.vert.h>
 #include <screen.frag.h>
 
-#include <destination.h>
 #include <shader.h>
 #include <program.h>
+#include <quad.h>
 
 #include "batch.h"
 #include "parameter.h"
 #include "ring.h"
+#include "scene.h"
 #include "shape.h"
 #include "transform.h"
 
 float sawtooth(float t) {
     float scale = 2.0f / static_cast<float>(M_PI);
     float sum = sinf(static_cast<float>(M_PI) * t);
-    sum -= sinf(2 * static_cast<float>(M_PI) * t) / 2.0;
-    sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0;
-    sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0;
+    sum -= sinf(2 * static_cast<float>(M_PI) * t) / 2.0f;
+    sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0f;
+    sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0f;
     return scale * sum;
 }
 
@@ -88,8 +90,8 @@ int main(int argc, char *argv[]) {
     Program screen_shader;
     screen_shader.attach(Shader(GL_VERTEX_SHADER, screen_vertex_shader));
     screen_shader.attach(Shader(GL_FRAGMENT_SHADER, screen_fragment_shader));
-    screen_shader.bind(Destination::ATTRIBUTE_POSITION, "position");
-    screen_shader.bind(Destination::ATTRIBUTE_TEXTURE_COORD, "texture_coord");
+    screen_shader.bind(Quad::ATTRIBUTE_POSITION, "position");
+    screen_shader.bind(Quad::ATTRIBUTE_TEXTURE_COORD, "texture_coord");
     screen_shader.link();
     {
         auto usage = screen_shader.use();
@@ -100,7 +102,8 @@ int main(int argc, char *argv[]) {
         );
         usage.set_uniform("projection", projection);
     }
-    Destination destination(size, size);
+    visualizer::Scene scene(size, size);
+    Quad quad;
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -143,7 +146,7 @@ int main(int argc, char *argv[]) {
         }
 
         {
-            auto binding = destination.bind_as_target();
+            auto binding = scene.bind_as_target();
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -158,11 +161,12 @@ int main(int argc, char *argv[]) {
         {
             glDisable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glViewport(0.0f, 0.0f, width, height);
+            glViewport(0, 0, width, height);
             glClear(GL_COLOR_BUFFER_BIT);
 
             auto usage = screen_shader.use();
-            destination.draw();
+            auto colors = scene.bind_colors_as_source(GL_TEXTURE0);
+            quad.draw();
         }
         SDL_GL_SwapWindow(window);
     }

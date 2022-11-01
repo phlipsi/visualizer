@@ -21,7 +21,7 @@ public:
         Binding &operator = (Binding &&) = delete;
     private:
         friend class Texture;
-        Binding(GLenum target, const Texture &texture);
+        Binding(GLenum texture_unit, GLenum target, const Texture &texture);
 
         std::optional<GLenum> target;
     };
@@ -29,7 +29,7 @@ public:
     Texture();
     ~Texture();
 
-    Binding bind(GLenum target) const;
+    Binding bind(GLenum texture_unit, GLenum target) const;
 
     GLuint get_id() const { return id; }
 

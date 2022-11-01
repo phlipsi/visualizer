@@ -1,8 +1,9 @@
 #include "texture.h"
 
-Texture::Binding::Binding(GLenum target, const Texture &texture)
+Texture::Binding::Binding(GLenum texture_unit, GLenum target, const Texture &texture)
   : target(target)
 {
+    glActiveTexture(texture_unit);
     glBindTexture(target, texture.id);
 }
 
@@ -43,6 +44,6 @@ Texture::~Texture() {
     glDeleteTextures(1, &id);
 }
 
-Texture::Binding Texture::bind(GLenum target) const {
-    return Binding(target, *this);
+Texture::Binding Texture::bind(GLenum texture_unit, GLenum target) const {
+    return Binding(texture_unit, target, *this);
 }

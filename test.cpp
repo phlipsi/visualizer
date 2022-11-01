@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
 
     Texture texture;
     {
-        auto binding = texture.bind(GL_TEXTURE_2D);
+        auto binding = texture.bind(GL_TEXTURE0, GL_TEXTURE_2D);
         binding.set_parameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
         binding.set_parameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
         binding.set_parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -164,8 +164,7 @@ int main(int argc, char * argv[])
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(x) / width - 0.5f)), glm::vec3(0, 1, 0));
             model = glm::rotate(model, glm::radians(360.0f * (static_cast<float>(y) / height - 0.5f)), glm::vec3(1, 0, 0));
             usage.set_uniform("model", model);
-            glActiveTexture(GL_TEXTURE0);
-            auto texture_binding = texture.bind(GL_TEXTURE_2D);
+            auto texture_binding = texture.bind(GL_TEXTURE0, GL_TEXTURE_2D);
             cube.draw();
         }
         {

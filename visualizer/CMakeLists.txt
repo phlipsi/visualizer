@@ -26,6 +26,8 @@ add_executable(visualizer
     parameter.cpp
     ring.h
     ring.cpp
+    scene.h
+    scene.cpp
     shape.h
     shape.cpp
     transform.h

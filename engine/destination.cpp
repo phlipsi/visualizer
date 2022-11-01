@@ -33,7 +33,7 @@ Destination::Destination(GLsizei width, GLsizei height)
         buffer_binding.data(sizeof(screen_vertex_data), screen_vertex_data, GL_STATIC_DRAW);
     }
     {
-        auto binding = destination.bind(GL_TEXTURE_2D);
+        auto binding = destination.bind(GL_TEXTURE0, GL_TEXTURE_2D);
         binding.image_2d(0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         binding.set_parameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         binding.set_parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -59,6 +59,6 @@ Framebuffer::Binding Destination::bind_as_target() const {
 
 void Destination::draw() const {
     auto binding = vao.bind();
-    auto destination_texture_binding = destination.bind(GL_TEXTURE_2D);
+    auto destination_texture_binding = destination.bind(GL_TEXTURE0, GL_TEXTURE_2D);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(screen_vertex_data));
 }
