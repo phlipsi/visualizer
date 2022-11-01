@@ -19,7 +19,7 @@ public:
     private:
         friend class Renderbuffer;
         Binding(GLenum target, const Renderbuffer &renderbuffer);
-        std::optional<GLenum> target;
+        GLenum target;
     };
     Renderbuffer();
     ~Renderbuffer();

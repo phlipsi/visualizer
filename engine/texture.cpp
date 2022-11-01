@@ -1,16 +1,15 @@
 #include "texture.h"
 
 Texture::Binding::Binding(GLenum texture_unit, GLenum target, const Texture &texture)
-  : target(target)
+  : texture_unit(texture_unit), target(target)
 {
     glActiveTexture(texture_unit);
     glBindTexture(target, texture.id);
 }
 
 Texture::Binding::~Binding() {
-    if (target) {
-        glBindTexture(*target, 0);
-    }
+    glActiveTexture(texture_unit);
+    glBindTexture(target, 0);
 }
 
 void Texture::Binding::image_2d(GLint level, GLint internalformat,
@@ -18,22 +17,16 @@ void Texture::Binding::image_2d(GLint level, GLint internalformat,
                                 GLenum format, GLenum type,
                                 const void *data) const
 {
-    if (target) {
-        glTexImage2D(*target, level, internalformat, width, height, border,
-                     format, type, data);
-    }
+    glTexImage2D(target, level, internalformat, width, height, border,
+                    format, type, data);
 }
 
 void Texture::Binding::set_parameter(GLenum pname, GLint param) const {
-    if (target) {
-        glTexParameteri(*target, pname, param);
-    }
+    glTexParameteri(target, pname, param);
 }
 
 void Texture::Binding::generate_mipmap() const {
-    if (target) {
-        glGenerateMipmap(*target);
-    }
+    glGenerateMipmap(target);
 }
 
 Texture::Texture() {

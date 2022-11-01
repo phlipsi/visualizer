@@ -53,7 +53,7 @@ void Program::bind(GLuint index, const GLchar *name) const {
     glBindAttribLocation(id, index, name);
 }
 
-void Program::attach(Shader &&shader) const {
+void Program::attach(const Shader &shader) const {
     glAttachShader(id, shader.get_id());
 }
 

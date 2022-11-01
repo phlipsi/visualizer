@@ -12,6 +12,8 @@
 #include <scene.frag.h>
 #include <screen.vert.h>
 #include <screen.frag.h>
+#include <blur.vert.h>
+#include <blur.frag.h>
 
 #include <shader.h>
 #include <program.h>
@@ -23,6 +25,7 @@
 #include "scene.h"
 #include "shape.h"
 #include "transform.h"
+#include "postprocessing.h"
 
 float sawtooth(float t) {
     float scale = 2.0f / static_cast<float>(M_PI);
@@ -102,8 +105,21 @@ int main(int argc, char *argv[]) {
         );
         usage.set_uniform("projection", projection);
     }
+
+    Program blur_shader;
+    blur_shader.attach(Shader(GL_VERTEX_SHADER, blur_vertex_shader));
+    blur_shader.attach(Shader(GL_FRAGMENT_SHADER, blur_fragment_shader));
+    blur_shader.bind(Quad::ATTRIBUTE_POSITION, "position");
+    blur_shader.bind(Quad::ATTRIBUTE_TEXTURE_COORD, "texture_coord");
+    blur_shader.link();
+
     visualizer::Scene scene(size, size);
+
+    visualizer::PostProcessing postprocessing1(size, size);
+    visualizer::PostProcessing postprocessing2(size, size);
+
     Quad quad;
+
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -115,20 +131,27 @@ int main(int argc, char *argv[]) {
     parameters.add_parameter("ring.rectangle.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 3000.0f)); });
     parameters.add_parameter("ring.rectangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
-    parameters.add_parameter("ring.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 5000.0f)); });
+    //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
+    parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
     //float angle1 = 0.0f;
     //float angle2 = 0.0f;
     float scale = 0.3f;
     auto ring = std::make_shared<visualizer::Ring>(6, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), 0.0f), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), 0.0f), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), 1.0f), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
     auto rotating_ring = std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring.angle"));
     visualizer::Batch batch;
 
     const glm::mat4 model{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f))};
 
+    const float freq = static_cast<float>(SDL_GetPerformanceFrequency());
+    Uint32 old_ticks;
+    Uint32 ticks = SDL_GetTicks();
+    const int max_cool_down = 10;
+    int cool_down = max_cool_down;
     bool quit = false;
     while (!quit) {
+        old_ticks = ticks;
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
@@ -151,24 +174,85 @@ int main(int argc, char *argv[]) {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            const long ticks = SDL_GetTicks();
+            const Uint64 counter = SDL_GetPerformanceCounter();
+            //const Uint64 ticks = SDL_GetTicks64();
             auto usage = scene_shader.use();
-            parameters.set_time(ticks);
+            //parameters.set_time(ticks);
+            parameters.set_time(1000.0f * static_cast<float>(counter) / freq);
             batch.clear();
             rotating_ring->draw(batch, model);
             batch.draw();
         }
+        glDisable(GL_DEPTH_TEST);
         {
-            glDisable(GL_DEPTH_TEST);
+            auto usage = blur_shader.use();
+            usage.set_uniform("horizontal", false);
+            auto colors = scene.bind_glow_as_source(GL_TEXTURE0);
+            auto target = postprocessing1.bind_as_target();
+
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            quad.draw();
+        }
+        {
+            auto usage = blur_shader.use();
+            usage.set_uniform("horizontal", true);
+            auto colors = postprocessing1.bind_as_source(GL_TEXTURE0);
+            auto target = postprocessing2.bind_as_target();
+
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            quad.draw();
+        }
+        for (int i = 0; i < 10; ++i) {
+            {
+                auto usage = blur_shader.use();
+                usage.set_uniform("horizontal", false);
+                auto colors = postprocessing2.bind_as_source(GL_TEXTURE0);
+                auto target = postprocessing1.bind_as_target();
+
+                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                quad.draw();
+            }
+            {
+                auto usage = blur_shader.use();
+                usage.set_uniform("horizontal", true);
+                auto colors = postprocessing1.bind_as_source(GL_TEXTURE0);
+                auto target = postprocessing2.bind_as_target();
+
+                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                quad.draw();
+            }
+        }
+        {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glViewport(0, 0, width, height);
             glClear(GL_COLOR_BUFFER_BIT);
 
             auto usage = screen_shader.use();
-            auto colors = scene.bind_colors_as_source(GL_TEXTURE0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, scene.get_color_buffer_id());
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, postprocessing2.get_texture_id());
+            usage.set_uniform("screen_texture", 0);
+            usage.set_uniform("glow_texture", 1);
+            //auto colors = scene.bind_colors_as_source(GL_TEXTURE0);
+            //auto glow = postprocessing2.bind_as_source(GL_TEXTURE1);
+
             quad.draw();
         }
         SDL_GL_SwapWindow(window);
+
+        if (cool_down == 0) {
+            ticks = SDL_GetTicks();
+            const std::string fps = std::to_string(max_cool_down * 1000.0 / static_cast<double>(ticks - old_ticks));
+            SDL_SetWindowTitle(window, fps.c_str());
+            cool_down = max_cool_down;
+        } else {
+            --cool_down;
+        }
     }
 
     SDL_GL_DeleteContext(context);

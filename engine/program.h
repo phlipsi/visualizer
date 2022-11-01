@@ -37,7 +37,7 @@ public:
     ~Program();
 
     void bind(GLuint index, const GLchar *name) const;
-    void attach(Shader &&) const;
+    void attach(const Shader &) const;
     void link() const;
     Usage use() const;
 

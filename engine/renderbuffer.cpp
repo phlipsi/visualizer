@@ -7,15 +7,11 @@ Renderbuffer::Binding::Binding(GLenum target, const Renderbuffer &renderbuffer)
 }
 
 Renderbuffer::Binding::~Binding() {
-    if (target) {
-        glBindFramebuffer(*target, 0);
-    }
+    glBindRenderbuffer(target, 0);
 }
 
 void Renderbuffer::Binding::storage(GLenum internalformat, GLsizei width, GLsizei height) const {
-    if (target) {
-        glRenderbufferStorage(*target, internalformat, width, height);
-    }
+    glRenderbufferStorage(target, internalformat, width, height);
 }
 
 Renderbuffer::Renderbuffer() {

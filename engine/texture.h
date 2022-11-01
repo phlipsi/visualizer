@@ -17,13 +17,15 @@ public:
         void generate_mipmap() const;
 
         Binding(const Binding &) = delete;
+        Binding(Binding &&) = delete;
         Binding &operator = (const Binding &) = delete;
         Binding &operator = (Binding &&) = delete;
     private:
         friend class Texture;
         Binding(GLenum texture_unit, GLenum target, const Texture &texture);
 
-        std::optional<GLenum> target;
+        GLenum texture_unit;
+        GLenum target;
     };
 
     Texture();
