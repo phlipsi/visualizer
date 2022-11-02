@@ -5,6 +5,7 @@ uniform sampler2D input_texture;
 uniform bool horizontal;
 
 const float weights[5] =  float[] (0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162);
+//const float weights[8] =  float[] (0.13298076, 0.125794409, 0.106482669, 0.080656908, 0.054670025, 0.033159046, 0.017996989, 0.00874063);
 
 out vec4 color;
 

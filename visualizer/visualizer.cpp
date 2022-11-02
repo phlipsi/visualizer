@@ -27,6 +27,13 @@
 #include "transform.h"
 #include "postprocessing.h"
 
+
+extern "C" {
+
+_declspec(dllexport) uint32_t NvOptimusEnablement = 0x00000001;
+
+}
+
 float sawtooth(float t) {
     float scale = 2.0f / static_cast<float>(M_PI);
     float sum = sinf(static_cast<float>(M_PI) * t);
@@ -34,6 +41,16 @@ float sawtooth(float t) {
     sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0f;
     sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0f;
     return scale * sum;
+}
+
+void logger(GLenum source,
+            GLenum type,
+            GLuint id,
+            GLenum severity,
+            GLsizei length,
+            const GLchar *message,
+            const void *userParam) {
+    std::cout << message << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -69,6 +86,11 @@ int main(int argc, char *argv[]) {
     if (glewInit() != GLEW_OK) {
         return EXIT_FAILURE;
     }
+
+    std::cout << "Messages:" << std::endl;
+    glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    glDebugMessageCallback(logger, nullptr);
 
     Program scene_shader;
     scene_shader.attach(Shader(GL_VERTEX_SHADER, scene_vertex_shader));
@@ -133,8 +155,9 @@ int main(int argc, char *argv[]) {
     parameters.add_parameter("ring.rectangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.glow", [](long ms) { return -0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
-    //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
-    parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
+    parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
+    //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
+    //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(180.0f * sawtooth(ms / 5000.0f)); });
     //float angle1 = 0.0f;
     //float angle2 = 0.0f;
     float scale = 0.3f;
@@ -206,7 +229,7 @@ int main(int argc, char *argv[]) {
             glClear(GL_COLOR_BUFFER_BIT);
             quad.draw();
         }
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 5; ++i) {
             {
                 auto usage = blur_shader.use();
                 usage.set_uniform("horizontal", false);
