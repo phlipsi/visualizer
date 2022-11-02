@@ -128,17 +128,19 @@ int main(int argc, char *argv[]) {
     parameters.add_parameter("ring.triangle.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 4000.0f)); });
     parameters.add_parameter("ring.triangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (3 * 2000.0f / 4)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.triangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (3 * 2000.0f / 4)) / 6.0f + 1.0f; });
+    parameters.add_parameter("ring.triangle.glow", [](long ms) { return 0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
     parameters.add_parameter("ring.rectangle.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 3000.0f)); });
     parameters.add_parameter("ring.rectangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
+    parameters.add_parameter("ring.rectangle.glow", [](long ms) { return -0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
     //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
     parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
     //float angle1 = 0.0f;
     //float angle2 = 0.0f;
     float scale = 0.3f;
     auto ring = std::make_shared<visualizer::Ring>(6, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), 1.0f), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), parameters.get_parameter("ring.rectangle.glow")), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
     auto rotating_ring = std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring.angle"));
     visualizer::Batch batch;
 

@@ -4,13 +4,13 @@
 
 namespace visualizer {
 
-Shape::Shape(const glm::vec3 &color, float glow, std::initializer_list<glm::mat4> triangles)
-  : color(color), glow(glow), triangles(triangles)
+Shape::Shape(const glm::vec3 &color, const float &glow, std::initializer_list<glm::mat4> triangles)
+  : color(color), glow(&glow), triangles(triangles)
 { }
 
 void Shape::draw(Batch &batch, const glm::mat4 &model) const {
     for (const auto &x : triangles) {
-        batch.add_triangle(model * x, color, glow);
+        batch.add_triangle(model * x, color, *glow);
     }
 }
 
@@ -24,7 +24,7 @@ const glm::mat4 triangle(
 
 }
 
-Triangle::Triangle(const glm::vec3 &color, float glow)
+Triangle::Triangle(const glm::vec3 &color, const float &glow)
   : Shape(color, glow, {triangle}) { }
 
 namespace {
@@ -45,7 +45,7 @@ const glm::mat4 rectangle_lower_right(
 
 }
 
-Rectangle::Rectangle(const glm::vec3 &color, float glow)
+Rectangle::Rectangle(const glm::vec3 &color, const float &glow)
   : Shape(color, glow, { rectangle_upper_left, rectangle_lower_right })
 { }
 
