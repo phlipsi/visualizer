@@ -14,3 +14,6 @@ add_executable(test
     cube.cpp
 )
 target_link_libraries(test PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm shader engine)
+
+add_executable(audio_test audio_test.cpp)
+target_link_libraries(audio_test PRIVATE CONAN_PKG::sdl)

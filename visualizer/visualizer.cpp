@@ -15,9 +15,11 @@
 #include <blur.vert.h>
 #include <blur.frag.h>
 
+#include <audio.h>
 #include <shader.h>
 #include <program.h>
 #include <quad.h>
+#include <wave.h>
 
 #include "batch.h"
 #include "parameter.h"
@@ -53,11 +55,26 @@ void logger(GLenum source,
     std::cout << message << std::endl;
 }
 
+void play_buffer(const Wave &wav, size_t &offset, Uint8* data, int len) {
+    if (offset >= wav.get_length()) {
+        return;
+    }
+    len = std::min<unsigned long long>(len, wav.get_length() - offset);
+    memset(data, 0, len);
+    SDL_MixAudioFormat(data, wav.get_buffer() + offset, wav.get_spec().format, len, SDL_MIX_MAXVOLUME);
+    offset += len;
+}
+
 int main(int argc, char *argv[]) {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
         std::cerr << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
+
+    size_t offset = 0;
+    Wave wav(argv[1]);
+    Audio audio(wav.get_spec());
+    audio.set_callback([&wav, &offset] (Uint8 *data, int len) { play_buffer(wav, offset, data, len); });
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -175,6 +192,7 @@ int main(int argc, char *argv[]) {
     const int max_cool_down = 10;
     int cool_down = max_cool_down;
     bool quit = false;
+    audio.pause(false);
     while (!quit) {
         old_ticks = ticks;
         SDL_Event event;
@@ -188,6 +206,14 @@ int main(int argc, char *argv[]) {
                 case SDL_KEYUP:
                     if (event.key.keysym.sym == SDLK_ESCAPE) {
                         quit = true;
+                    } else if (event.key.keysym.sym == SDLK_LEFT) {
+                        if (offset > 10 * wav.get_spec().freq) {
+                            offset -= 10 * wav.get_spec().freq;
+                        } else {
+                            offset = 0;
+                        }
+                    } else if (event.key.keysym.sym == SDLK_RIGHT) {
+                        offset += 10 * wav.get_spec().freq;
                     }
                     break;
             }
