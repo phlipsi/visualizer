@@ -22,7 +22,7 @@
 #include <wave.h>
 
 #include "batch.h"
-#include "parameter.h"
+#include "parameters.h"
 #include "ring.h"
 #include "scene.h"
 #include "shape.h"
@@ -165,17 +165,20 @@ int main(int argc, char *argv[]) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
     visualizer::Parameters parameters;
-    parameters.add_parameter("ring.triangle.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 4000.0f)); });
-    parameters.add_parameter("ring.triangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (3 * 2000.0f / 4)) / 6.0f + 1.0f; });
-    parameters.add_parameter("ring.triangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (3 * 2000.0f / 4)) / 6.0f + 1.0f; });
-    parameters.add_parameter("ring.triangle.glow", [](long ms) { return 0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
-    parameters.add_parameter("ring.rectangle.angle", [](long ms) { return glm::radians(180.0f * sawtooth(ms / 3000.0f)); });
-    parameters.add_parameter("ring.rectangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
-    parameters.add_parameter("ring.rectangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
-    parameters.add_parameter("ring.rectangle.glow", [](long ms) { return -0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
+    parameters.add_action("ring.triangle.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 4000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
+    parameters.add_action("ring.triangle.width", 0, std::make_unique<visualizer::Sine>(4.0f / (3.0f * 2000.0f), 0.0f, 1.0f, 1.0f / 6.0f));
+    parameters.add_action("ring.triangle.height", 0, std::make_unique<visualizer::Sine>(4.0f / (3.0f * 2000.0f), 0.0f, 1.0f, -1.0f / 6.0f));
+    parameters.add_action("ring.triangle.glow", 0, std::make_unique<visualizer::Sine>(1.0f / 2000.0f, 0.0f, 0.5f, 0.5f));
+    parameters.add_action("ring.rectangle.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 3000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
+    parameters.add_action("ring.rectangle.width", 0, std::make_unique<visualizer::Sine>(3.0f / (2.0f * 2000.0f), 0.0f, 1.0f, 1.0f / 6.0f));
+    parameters.add_action("ring.rectangle.height", 0, std::make_unique<visualizer::Sine>(3.0f / (2.0f * 2000.0f), 0.0f, 1.0f, -1.0f / 6.0f));
+    parameters.add_action("ring.rectangle.glow", 0, std::make_unique<visualizer::Sine>(1.0f / 2000.0f, 0.0f, 0.5f, -0.5f));
     //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
     //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
-    parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(180.0f * sawtooth(ms / 5000.0f)); });
+    parameters.add_action("ring.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 5000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
+    parameters.add_action("ring.angle", 6000, std::make_unique<visualizer::Smooth>());
+    parameters.add_action("ring.angle", 10000, std::make_unique<visualizer::Constant>(0.0));
+
     //float angle1 = 0.0f;
     //float angle2 = 0.0f;
     float scale = 0.3f;
@@ -194,6 +197,7 @@ int main(int argc, char *argv[]) {
     int cool_down = max_cool_down;
     bool quit = false;
     audio.pause(false);
+    const Uint64 start = SDL_GetPerformanceCounter();
     while (!quit) {
         old_ticks = ticks;
         SDL_Event event;
@@ -230,7 +234,9 @@ int main(int argc, char *argv[]) {
             //const Uint64 ticks = SDL_GetTicks64();
             auto usage = scene_shader.use();
             //parameters.set_time(ticks);
-            parameters.set_time(1000.0f * static_cast<float>(counter) / freq);
+            const unsigned long ms = 1000.0f * static_cast<float>(counter - start) / freq;
+            std::cout << ms << std::endl;
+            parameters.set_time(ms);
             batch.clear();
             rotating_ring->draw(batch, model);
             batch.draw();

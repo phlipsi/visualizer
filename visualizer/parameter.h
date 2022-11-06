@@ -1,22 +1,25 @@
 #pragma once
 
-#include <functional>
+#include "action.h"
+
 #include <map>
-#include <string>
+#include <memory>
 
 namespace visualizer {
 
-class Parameters {
+class Parameter {
 public:
-    void set_time(long ms);
+    void set_time(unsigned long ms);
+    void add_action(unsigned long timestamp, std::unique_ptr<Action> action);
 
-    void add_parameter(const std::string &name, std::function<float(long)> modifier);
-
-    const float &get_parameter(const std::string &name);
-
+    const float &get_value() const { return value; }
 private:
-    std::map<std::string, std::function<float(long)>> modifiers;
-    std::map<std::string, float> parameters;
+    typedef std::map<unsigned long, std::unique_ptr<Action>> ActionMap;
+
+    float value;
+    ActionMap actions;
+
+    ActionMap::const_iterator get_current(unsigned long ms) const;
 };
 
 }

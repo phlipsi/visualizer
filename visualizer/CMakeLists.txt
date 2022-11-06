@@ -29,11 +29,15 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/blur.frag.h"
     DEPENDS "blur.frag")
 
 add_executable(visualizer
+    action.h
+    action.cpp
     batch.h
     batch.cpp
     object.h
     parameter.h
     parameter.cpp
+    parameters.h
+    parameters.cpp
     postprocessing.h
     postprocessing.cpp
     ring.h

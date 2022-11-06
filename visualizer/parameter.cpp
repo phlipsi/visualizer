@@ -4,23 +4,43 @@
 
 namespace visualizer {
 
-void Parameters::set_time(long ms) {
-    for (const auto &entry : modifiers) {
-        parameters[entry.first] = entry.second(ms);
+Parameter::ActionMap::const_iterator Parameter::get_current(unsigned long ms) const {
+    auto result = actions.end();
+    for (auto it = actions.begin(); it != actions.end(); ++it) {
+        if (it->first > ms) {
+            break;
+        } else {
+            result = it;
+        }
     }
+    return result;
 }
 
-void Parameters::add_parameter(const std::string &name, std::function<float(long)> modifier) {
-    modifiers[name] = modifier;
-    parameters[name] = 0.0f;
+
+void Parameter::set_time(unsigned long ms) {
+    const auto current = get_current(ms);
+    if (current == actions.end()) {
+        throw std::runtime_error("Missing initial action");
+    }
+    const Action *previous = nullptr;
+    unsigned long previous_end = 0;
+    if (current != actions.begin()) {
+        const auto previous_it = std::prev(current);
+        previous = previous_it->second.get();
+        previous_end = current->first - previous_it->first;
+    }
+    const Action *next = nullptr;
+    const auto next_it = std::next(current);
+    unsigned long next_start = 0;
+    if (next_it != actions.end()) {
+        next = next_it->second.get();
+        next_start = next_it->first - current->first;
+    }
+    value = current->second->get_value(ms - current->first, previous_end, previous, next_start, next);
 }
 
-const float &Parameters::get_parameter(const std::string &name) {
-    const auto it = parameters.find(name);
-    if (it == parameters.end()) {
-        throw std::runtime_error("Undefined parameter");
-    }
-    return it->second;
+void Parameter::add_action(unsigned long timestamp, std::unique_ptr<Action> action) {
+    actions.emplace(timestamp, std::move(action));
 }
 
 }
