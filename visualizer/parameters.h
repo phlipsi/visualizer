@@ -2,6 +2,7 @@
 
 #include "parameter.h"
 
+#include <istream>
 #include <map>
 #include <memory>
 #include <string>
@@ -12,13 +13,17 @@ class Action;
 
 class Parameters {
 public:
-    void set_time(unsigned long ms);
+    explicit Parameters(std::istream &input);
 
-    void add_action(const std::string &name, unsigned long timestamp, std::unique_ptr<Action> action);
+    void set_time(float t);
+
+    void add_action(const std::string &name, float t, std::unique_ptr<Action> action);
 
     const float &get_parameter(const std::string &name);
 
+    float get_ms_per_beat() const { return ms_per_beat; }
 private:
+    float ms_per_beat;
     std::map<std::string, Parameter> parameters;
 };
 

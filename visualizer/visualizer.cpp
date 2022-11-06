@@ -4,6 +4,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <algorithm>
@@ -73,7 +74,7 @@ int main(int argc, char *argv[]) {
     }
 
     size_t offset = 0;
-    Wave wav(argv[1]);
+    Wave wav(argv[2]);
     Audio audio(wav.get_spec());
     audio.set_callback([&wav, &offset] (Uint8 *data, int len) { play_buffer(wav, offset, data, len); });
 
@@ -164,23 +165,8 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
-    visualizer::Parameters parameters;
-    parameters.add_action("ring.triangle.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 4000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
-    parameters.add_action("ring.triangle.width", 0, std::make_unique<visualizer::Sine>(4.0f / (3.0f * 2000.0f), 0.0f, 1.0f, 1.0f / 6.0f));
-    parameters.add_action("ring.triangle.height", 0, std::make_unique<visualizer::Sine>(4.0f / (3.0f * 2000.0f), 0.0f, 1.0f, -1.0f / 6.0f));
-    parameters.add_action("ring.triangle.glow", 0, std::make_unique<visualizer::Sine>(1.0f / 2000.0f, 0.0f, 0.5f, 0.5f));
-    parameters.add_action("ring.rectangle.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 3000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
-    parameters.add_action("ring.rectangle.width", 0, std::make_unique<visualizer::Sine>(3.0f / (2.0f * 2000.0f), 0.0f, 1.0f, 1.0f / 6.0f));
-    parameters.add_action("ring.rectangle.height", 0, std::make_unique<visualizer::Sine>(3.0f / (2.0f * 2000.0f), 0.0f, 1.0f, -1.0f / 6.0f));
-    parameters.add_action("ring.rectangle.glow", 0, std::make_unique<visualizer::Sine>(1.0f / 2000.0f, 0.0f, 0.5f, -0.5f));
-    //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
-    //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
-    parameters.add_action("ring.angle", 0, std::make_unique<visualizer::Sawtooth>(1.0f / 5000.0f, 0.0f, 0.0f, glm::radians(180.0f)));
-    parameters.add_action("ring.angle", 6000, std::make_unique<visualizer::Smooth>());
-    parameters.add_action("ring.angle", 10000, std::make_unique<visualizer::Constant>(0.0));
-
-    //float angle1 = 0.0f;
-    //float angle2 = 0.0f;
+    std::ifstream choreography(argv[1]);
+    visualizer::Parameters parameters(choreography);
     float scale = 0.3f;
     auto ring = std::make_shared<visualizer::Ring>(6, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
         std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
@@ -191,6 +177,7 @@ int main(int argc, char *argv[]) {
     const glm::mat4 model{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f))};
 
     const float freq = static_cast<float>(SDL_GetPerformanceFrequency());
+    const float ms_per_beat = parameters.get_ms_per_beat();
     Uint32 old_ticks;
     Uint32 ticks = SDL_GetTicks();
     const int max_cool_down = 10;
@@ -234,9 +221,9 @@ int main(int argc, char *argv[]) {
             //const Uint64 ticks = SDL_GetTicks64();
             auto usage = scene_shader.use();
             //parameters.set_time(ticks);
-            const unsigned long ms = 1000.0f * static_cast<float>(counter - start) / freq;
-            std::cout << ms << std::endl;
-            parameters.set_time(ms);
+            const float t = 1000.0f * static_cast<float>(counter - start) / freq;
+            std::cout << t / ms_per_beat - 0.1f << std::endl;
+            parameters.set_time(t);
             batch.clear();
             rotating_ring->draw(batch, model);
             batch.draw();

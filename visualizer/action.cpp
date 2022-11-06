@@ -7,19 +7,19 @@ namespace visualizer {
 
 Constant::Constant(float value) : value(value) { }
 
-float Constant::get_value(unsigned long ms,
-                          unsigned long previous_end,
+float Constant::get_value(float ms,
+                          float previous_end,
                           const Action *previous,
-                          unsigned long next_start,
+                          float next_start,
                           const Action *next) const
 {
     return value;
 }
 
-float Linear::get_value(unsigned long ms,
-                        unsigned long previous_end,
+float Linear::get_value(float t,
+                        float previous_end,
                         const Action *previous,
-                        unsigned long next_start,
+                        float next_start,
                         const Action *next) const
 {
     if (previous == nullptr) {
@@ -30,8 +30,8 @@ float Linear::get_value(unsigned long ms,
     }
     const float start = previous->get_value(previous_end, 0, nullptr, 0, nullptr);
     const float end = next->get_value(0, 0, nullptr, 0, nullptr);
-    const float t = static_cast<float>(ms) / next_start;
-    return (1.0f - t) * start + t * end;
+    const float t1 = t / next_start;
+    return (1.0f - t1) * start + t1 * end;
 }
 
 namespace {
@@ -48,10 +48,10 @@ float smooth(float t) {
 
 }
 
-float Smooth::get_value(unsigned long ms,
-                        unsigned long previous_end,
+float Smooth::get_value(float t,
+                        float previous_end,
                         const Action *previous,
-                        unsigned long next_start,
+                        float next_start,
                         const Action *next) const
 {
     if (previous == nullptr) {
@@ -62,30 +62,30 @@ float Smooth::get_value(unsigned long ms,
     }
     const float start = previous->get_value(previous_end, 0, nullptr, 0, nullptr);
     const float end = next->get_value(0, 0, nullptr, 0, nullptr);
-    const float t = static_cast<float>(ms) / next_start;
-    const float s = smooth(t);
+    const float t0 = t / next_start;
+    const float s = smooth(t0);
     return (1.0f - s) * start + s * end;
 }
 
-Sine::Sine(float freq, float phase, float baseline, float amplitude)
-  : freq(freq),
-    phase(phase),
+Sine::Sine(float ms_per_beat, float beats, float start, float baseline, float amplitude)
+  : freq(1.0f / (beats * ms_per_beat)),
+    phase(ms_per_beat * start),
     baseline(baseline),
     amplitude(amplitude)
 { }
 
-float Sine::get_value(unsigned long ms,
-                      unsigned long previous_end,
+float Sine::get_value(float t,
+                      float previous_end,
                       const Action *previous,
-                      unsigned long next_start,
+                      float next_start,
                       const Action *next) const
 {
-    return amplitude * sinf(2 * static_cast<float>(M_PI) * (freq * static_cast<float>(ms) + phase)) + baseline;
+    return amplitude * sinf(2 * static_cast<float>(M_PI) * (freq * t + phase)) + baseline;
 }
 
-Sawtooth::Sawtooth(float freq, float phase, float baseline, float amplitude)
-  : freq(freq),
-    phase(phase),
+Sawtooth::Sawtooth(float ms_per_beat, float beats, float start, float baseline, float amplitude)
+  : freq(1.0f / (beats * ms_per_beat)),
+    phase(ms_per_beat * start),
     baseline(baseline),
     amplitude(amplitude)
 { }
@@ -103,13 +103,45 @@ float sawtooth(float t) {
 
 }
 
-float Sawtooth::get_value(unsigned long ms,
-                          unsigned long previous_end,
+float Sawtooth::get_value(float t,
+                          float previous_end,
                           const Action *previous,
-                          unsigned long next_start,
+                          float next_start,
                           const Action *next) const
 {
-    return amplitude * sawtooth(freq * static_cast<float>(ms) + phase) + baseline;
+    return amplitude * sawtooth(freq * t + phase) + baseline;
+}
+
+Steady::Steady(float ms_per_beat, float increase_per_beat, float start_value)
+  : slope(increase_per_beat / ms_per_beat),
+    initial(start_value)
+{ }
+
+float Steady::get_value(float t,
+                        float previous_end,
+                        const Action *previous,
+                        float next_start,
+                        const Action *next) const
+{
+    return slope * t + initial;
+}
+
+std::unique_ptr<Action> create_action(const std::string &name, float ms_per_beat, const std::vector<float> &params) {
+    if (name == "constant") {
+        return std::make_unique<Constant>(params.at(0));
+    } else if (name == "linear") {
+        return std::make_unique<Linear>();
+    } else if (name == "smooth") {
+        return std::make_unique<Smooth>();
+    } else if (name == "sine") {
+        return std::make_unique<Sine>(ms_per_beat, params.at(0), params.at(1), params.at(2), params.at(3));
+    } else if (name == "sawtooth") {
+        return std::make_unique<Sawtooth>(ms_per_beat, params.at(0), params.at(1), params.at(2), params.at(3));
+    } else if (name == "steady") {
+        return std::make_unique<Steady>(ms_per_beat, params.at(0), params.at(1));
+    } else {
+        throw std::runtime_error("Unknown action " + name);
+    }
 }
 
 }

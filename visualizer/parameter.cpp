@@ -4,10 +4,10 @@
 
 namespace visualizer {
 
-Parameter::ActionMap::const_iterator Parameter::get_current(unsigned long ms) const {
+Parameter::ActionMap::const_iterator Parameter::get_current(float t) const {
     auto result = actions.end();
     for (auto it = actions.begin(); it != actions.end(); ++it) {
-        if (it->first > ms) {
+        if (it->first > t) {
             break;
         } else {
             result = it;
@@ -17,8 +17,8 @@ Parameter::ActionMap::const_iterator Parameter::get_current(unsigned long ms) co
 }
 
 
-void Parameter::set_time(unsigned long ms) {
-    const auto current = get_current(ms);
+void Parameter::set_time(float t) {
+    const auto current = get_current(t);
     if (current == actions.end()) {
         throw std::runtime_error("Missing initial action");
     }
@@ -36,10 +36,10 @@ void Parameter::set_time(unsigned long ms) {
         next = next_it->second.get();
         next_start = next_it->first - current->first;
     }
-    value = current->second->get_value(ms - current->first, previous_end, previous, next_start, next);
+    value = current->second->get_value(t - current->first, previous_end, previous, next_start, next);
 }
 
-void Parameter::add_action(unsigned long timestamp, std::unique_ptr<Action> action) {
+void Parameter::add_action(float timestamp, std::unique_ptr<Action> action) {
     actions.emplace(timestamp, std::move(action));
 }
 

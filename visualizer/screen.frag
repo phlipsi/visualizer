@@ -13,6 +13,6 @@ void main() {
     color += glow;
     //FragColor = vec4(color, 1.0);
     vec3 result = vec3(1.0) - exp(-color);
-    result = pow(result, vec3(1.0 / 2.2));
+    result = pow(result, vec3(1.0 / 2.0));
     FragColor = vec4(result, 1.0);
 }

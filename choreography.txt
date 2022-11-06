@@ -1,0 +1,15 @@
+bpm: 94
+meter: 4/4
+
+time                   0
+ring.angle             steady,pi,0
+
+ring.triangle.angle    sine,4,0,0,2pi
+ring.triangle.width    sine,0.5,0,1.0,0.15
+ring.triangle.height   sine,0.5,0,1.0,-0.15
+ring.triangle.glow     sine,4,0,0.5,0.5
+
+ring.rectangle.angle   sine,4,0,0,2pi
+ring.rectangle.width   sine,0.5,0,1.0,0.15
+ring.rectangle.height  sine,0.5,0,1.0,-0.15
+ring.rectangle.glow    sine,4,0,0.5,-0.5
