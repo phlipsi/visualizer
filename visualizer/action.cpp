@@ -7,7 +7,7 @@ namespace visualizer {
 
 Constant::Constant(float value) : value(value) { }
 
-float Constant::get_value(float ms,
+float Constant::get_value(float measure,
                           float previous_end,
                           const Action *previous,
                           float next_start,
@@ -16,7 +16,7 @@ float Constant::get_value(float ms,
     return value;
 }
 
-float Linear::get_value(float t,
+float Linear::get_value(float measure,
                         float previous_end,
                         const Action *previous,
                         float next_start,
@@ -30,8 +30,8 @@ float Linear::get_value(float t,
     }
     const float start = previous->get_value(previous_end, 0, nullptr, 0, nullptr);
     const float end = next->get_value(0, 0, nullptr, 0, nullptr);
-    const float t1 = t / next_start;
-    return (1.0f - t1) * start + t1 * end;
+    const float t = measure / next_start;
+    return (1.0f - t) * start + t * end;
 }
 
 namespace {
@@ -48,7 +48,7 @@ float smooth(float t) {
 
 }
 
-float Smooth::get_value(float t,
+float Smooth::get_value(float measure,
                         float previous_end,
                         const Action *previous,
                         float next_start,
@@ -62,30 +62,46 @@ float Smooth::get_value(float t,
     }
     const float start = previous->get_value(previous_end, 0, nullptr, 0, nullptr);
     const float end = next->get_value(0, 0, nullptr, 0, nullptr);
-    const float t0 = t / next_start;
-    const float s = smooth(t0);
-    return (1.0f - s) * start + s * end;
+    const float t = smooth(measure / next_start);
+    return (1.0f - t) * start + t * end;
 }
 
-Sine::Sine(float ms_per_beat, float beats, float start, float baseline, float amplitude)
-  : freq(1.0f / (beats * ms_per_beat)),
-    phase(ms_per_beat * start),
+Periodic::Periodic(std::function<float(float)> func, float measures, float start, float baseline, float amplitude)
+  : func(func),
+    measures(measures),
+    start(start),
     baseline(baseline),
     amplitude(amplitude)
 { }
 
-float Sine::get_value(float t,
+float Periodic::get_value(float measure,
+                          float previous_end,
+                          const Action *previous,
+                          float next_start,
+                          const Action *next) const
+{
+    return amplitude * func((measure + start) / measures) + baseline;
+}
+
+Sine::Sine(float measures, float start, float baseline, float amplitude)
+  : measures(measures),
+    start(start),
+    baseline(baseline),
+    amplitude(amplitude)
+{ }
+
+float Sine::get_value(float measure,
                       float previous_end,
                       const Action *previous,
                       float next_start,
                       const Action *next) const
 {
-    return amplitude * sinf(2 * static_cast<float>(M_PI) * (freq * t + phase)) + baseline;
+    return amplitude * sinf(2 * static_cast<float>(M_PI) * (measure + start) / measures) + baseline;
 }
 
-Sawtooth::Sawtooth(float ms_per_beat, float beats, float start, float baseline, float amplitude)
-  : freq(1.0f / (beats * ms_per_beat)),
-    phase(ms_per_beat * start),
+Sawtooth::Sawtooth(float measures, float start, float baseline, float amplitude)
+  : measures(measures),
+    start(start),
     baseline(baseline),
     amplitude(amplitude)
 { }
@@ -103,30 +119,42 @@ float sawtooth(float t) {
 
 }
 
-float Sawtooth::get_value(float t,
+float Sawtooth::get_value(float measure,
                           float previous_end,
                           const Action *previous,
                           float next_start,
                           const Action *next) const
 {
-    return amplitude * sawtooth(freq * t + phase) + baseline;
+    return amplitude * sawtooth((measure + start) / measures) + baseline;
 }
 
-Steady::Steady(float ms_per_beat, float increase_per_beat, float start_value)
-  : slope(increase_per_beat / ms_per_beat),
-    initial(start_value)
+Steady::Steady(float increase_per_measure, float start)
+  : increase_per_measure(increase_per_measure),
+    start(start)
 { }
 
-float Steady::get_value(float t,
+float Steady::get_value(float measure,
                         float previous_end,
                         const Action *previous,
                         float next_start,
                         const Action *next) const
 {
-    return slope * t + initial;
+    return measure * increase_per_measure + start;
 }
 
-std::unique_ptr<Action> create_action(const std::string &name, float ms_per_beat, const std::vector<float> &params) {
+namespace {
+
+float square(float t) {
+    float result = 0;
+    result += sinf(2 * static_cast<float>(M_PI) * 1.0f * t) / 1.0f;
+    result += sinf(2 * static_cast<float>(M_PI) * 3.0f * t) / 3.0f;
+    result += sinf(2 * static_cast<float>(M_PI) * 5.0f * t) / 5.0f;
+    return 4.0 * result / static_cast<float>(M_PI);
+}
+
+}
+
+std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params) {
     if (name == "constant") {
         return std::make_unique<Constant>(params.at(0));
     } else if (name == "linear") {
@@ -134,11 +162,13 @@ std::unique_ptr<Action> create_action(const std::string &name, float ms_per_beat
     } else if (name == "smooth") {
         return std::make_unique<Smooth>();
     } else if (name == "sine") {
-        return std::make_unique<Sine>(ms_per_beat, params.at(0), params.at(1), params.at(2), params.at(3));
+        return std::make_unique<Sine>(params.at(0), params.at(1), params.at(2), params.at(3));
     } else if (name == "sawtooth") {
-        return std::make_unique<Sawtooth>(ms_per_beat, params.at(0), params.at(1), params.at(2), params.at(3));
+        return std::make_unique<Sawtooth>(params.at(0), params.at(1), params.at(2), params.at(3));
     } else if (name == "steady") {
-        return std::make_unique<Steady>(ms_per_beat, params.at(0), params.at(1));
+        return std::make_unique<Steady>(params.at(0), params.at(1));
+    } else if (name == "square") {
+        return std::make_unique<Periodic>(square, params.at(0), params.at(1), params.at(2), params.at(3));
     } else {
         throw std::runtime_error("Unknown action " + name);
     }

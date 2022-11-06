@@ -9,8 +9,8 @@ namespace visualizer {
 
 class Parameter {
 public:
-    void set_time(float t);
-    void add_action(float timestamp, std::unique_ptr<Action> action);
+    void set_measure(float measure);
+    void add_action(float measure, std::unique_ptr<Action> action);
 
     const float &get_value() const { return value; }
 private:
@@ -19,7 +19,7 @@ private:
     float value;
     ActionMap actions;
 
-    ActionMap::const_iterator get_current(float t) const;
+    ActionMap::const_iterator get_current(float measure) const;
 };
 
 }

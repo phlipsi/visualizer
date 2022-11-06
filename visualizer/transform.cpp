@@ -30,13 +30,13 @@ glm::mat4 Deform::get_transform(const glm::mat4& model) const {
     return glm::scale(model, glm::vec3(*width, *height, 1.0f));
 }
 
-Rotate::Rotate(std::shared_ptr<Object> object, const float &angle)
+Rotate::Rotate(std::shared_ptr<Object> object, const float &degree)
   : Transform(object),
-    angle(&angle)
+    degree(&degree)
 { }
 
 glm::mat4 Rotate::get_transform(const glm::mat4 &model) const {
-    return glm::rotate(model, *angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    return glm::rotate(model, glm::radians(*degree), glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
 Translate::Translate(std::shared_ptr<Object> object, const glm::vec3 &direction)

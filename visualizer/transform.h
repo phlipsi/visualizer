@@ -39,10 +39,10 @@ private:
 
 class Rotate : public Transform {
 public:
-    Rotate(std::shared_ptr<Object> object, const float &angle);
+    Rotate(std::shared_ptr<Object> object, const float &degree);
 
 private:
-    const float *angle;
+    const float *degree;
 
     glm::mat4 get_transform(const glm::mat4& model) const override;
 };

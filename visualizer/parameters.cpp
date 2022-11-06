@@ -39,12 +39,15 @@ std::string trim(const std::string &s) {
 }*/
 
 Parameters::Parameters(std::istream &input) {
-    std::map<std::string::size_type, float> timestamp_positions;
+    std::map<std::string::size_type, float> measure_positions;
     std::string line;
     unsigned int bpm = 0;
     unsigned int meter_num = 0;
     unsigned int meter_denum = 0;
     while (std::getline(input, line) && !line.empty()) {
+        if (line[0] == '#') {
+            continue;
+        }
         const std::string::size_type sep = line.find(":");
         if (sep != std::string::npos) {
             const std::string key = line.substr(0, sep);
@@ -63,7 +66,8 @@ Parameters::Parameters(std::istream &input) {
     // 1 / bpm = mpb (minutes per beat)
     // mpb * 60000 = mspb (milliseconds per beat)
     // meter_num * spb = mspm (milliseconds per measure)
-    ms_per_beat = static_cast<float>(meter_num) * 60000.0f / static_cast<float>(bpm);
+    //ms_per_beat = static_cast<float>(meter_num) * 60000.0f / static_cast<float>(bpm);
+    ms_per_measure = static_cast<float>(meter_num) * 60000.0f / static_cast<float>(bpm);
 
     std::getline(input, line);
     std::string::size_type pos = 4;
@@ -74,19 +78,24 @@ Parameters::Parameters(std::istream &input) {
             if (len != std::string::npos) {
                 len = end - pos;
             }
-            timestamp_positions[pos] = ms_per_beat * std::stof(line.substr(pos, len));
+            measure_positions[pos] = std::stof(line.substr(pos, len));
             pos = end;
         } else {
             ++pos;
         }
     }
     while (std::getline(input, line)) {
-        if (line.empty()) {
+        if (line.empty() || line[0] == '#') {
             continue;
         }
         const std::string::size_type name_end = line.find(" ");
         const std::string name = line.substr(0, name_end);
-        for (const auto &entry : timestamp_positions) {
+        for (const auto &entry : measure_positions) {
+            if (entry.first >= line.length()) {
+                break;
+            } else if (line[entry.first] == ' ') {
+                continue;
+            }
             const std::string::size_type action_end = line.find_first_of(" ,", entry.first);
             const std::string action = line.substr(entry.first, action_end - entry.first);
             std::vector<float> params;
@@ -113,19 +122,19 @@ Parameters::Parameters(std::istream &input) {
                     }
                 }
             }
-            parameters[name].add_action(entry.second, create_action(action, ms_per_beat, params));
+            parameters[name].add_action(entry.second, create_action(action, params));
         }
     }
 }
 
-void Parameters::set_time(float t) {
+void Parameters::set_measure(float measure) {
     for (auto &entry : parameters) {
-        entry.second.set_time(t);
+        entry.second.set_measure(measure);
     }
 }
 
-void Parameters::add_action(const std::string &name, float t, std::unique_ptr<Action> action) {
-    parameters[name].add_action(t, std::move(action));
+void Parameters::add_action(const std::string &name, float measure, std::unique_ptr<Action> action) {
+    parameters[name].add_action(measure, std::move(action));
 }
 
 const float &Parameters::get_parameter(const std::string &name) {

@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
     const glm::mat4 model{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f))};
 
     const float freq = static_cast<float>(SDL_GetPerformanceFrequency());
-    const float ms_per_beat = parameters.get_ms_per_beat();
+    const float ms_per_measure = parameters.get_ms_per_measure();
     Uint32 old_ticks;
     Uint32 ticks = SDL_GetTicks();
     const int max_cool_down = 10;
@@ -222,8 +222,9 @@ int main(int argc, char *argv[]) {
             auto usage = scene_shader.use();
             //parameters.set_time(ticks);
             const float t = 1000.0f * static_cast<float>(counter - start) / freq;
-            std::cout << t / ms_per_beat - 0.1f << std::endl;
-            parameters.set_time(t);
+            const float measure = t / ms_per_measure - 0.1f;
+            std::cout << measure << std::endl;
+            parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
             rotating_ring->draw(batch, model);
             batch.draw();

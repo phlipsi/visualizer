@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -9,11 +10,13 @@ class Action {
 public:
     Action() = default;
     virtual ~Action() = default;
-    virtual float get_value(float t,
+
+    virtual float get_value(float measure,
                             float previous_end,
                             const Action *previous,
                             float next_start,
                             const Action *next) const = 0;
+
 
     Action(const Action &) = delete;
     Action &operator = (const Action &) = delete;
@@ -23,7 +26,7 @@ class Constant : public Action {
 public:
     Constant(float value);
 
-    float get_value(float t,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
@@ -35,7 +38,7 @@ private:
 
 class Linear : public Action {
 public:
-    float get_value(float ms,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
@@ -44,62 +47,80 @@ public:
 
 class Smooth : public Action {
 public:
-    float get_value(float ms,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
                     const Action *next) const override;
 };
 
+class Periodic : public Action {
+public:
+    Periodic(std::function<float(float)> func, float measures, float start, float baseline, float amplitude);
+
+    float get_value(float measure,
+                    float previous_end,
+                    const Action *previous,
+                    float next_start,
+                    const Action *next) const override;
+
+private:
+    std::function<float(float)> func;
+    float measures;
+    float start;
+    float baseline;
+    float amplitude;
+};
+
 class Sine : public Action {
 public:
-    Sine(float ms_per_beat, float beats, float start, float baseline, float amplitude);
+    Sine(float measures, float start, float baseline, float amplitude);
 
-    float get_value(float ms,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
                     const Action *next) const override;
 private:
-    float freq;
-    float phase;
+    float measures;
+    float start;
     float baseline;
     float amplitude;
 };
 
 class Sawtooth : public Action {
 public:
-    Sawtooth(float ms_per_beat, float beats, float start, float baseline, float amplitude);
+    Sawtooth(float measures, float start, float baseline, float amplitude);
 
-    float get_value(float ms,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
                     const Action *next) const override;
 
 private:
-    float freq;
-    float phase;
+    float measures;
+    float start;
     float baseline;
     float amplitude;
 };
 
 class Steady : public Action {
 public:
-    Steady(float ms_per_beat, float increase_per_beat, float start_value);
+    Steady(float increase_per_measure, float start);
 
-    float get_value(float ms,
+    float get_value(float measure,
                     float previous_end,
                     const Action *previous,
                     float next_start,
                     const Action *next) const override;
 
 private:
-    float slope;
-    float initial;
+    float increase_per_measure;
+    float start;
 
 };
 
-std::unique_ptr<Action> create_action(const std::string &name, float ms_per_beat, const std::vector<float> &params);
+std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params);
 
 }

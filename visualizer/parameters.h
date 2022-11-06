@@ -15,15 +15,15 @@ class Parameters {
 public:
     explicit Parameters(std::istream &input);
 
-    void set_time(float t);
+    void set_measure(float measure);
 
-    void add_action(const std::string &name, float t, std::unique_ptr<Action> action);
+    void add_action(const std::string &name, float measure, std::unique_ptr<Action> action);
 
     const float &get_parameter(const std::string &name);
 
-    float get_ms_per_beat() const { return ms_per_beat; }
+    float get_ms_per_measure() const { return ms_per_measure; }
 private:
-    float ms_per_beat;
+    float ms_per_measure;
     std::map<std::string, Parameter> parameters;
 };
 
