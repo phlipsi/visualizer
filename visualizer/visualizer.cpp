@@ -29,12 +29,13 @@
 #include "transform.h"
 #include "postprocessing.h"
 
-
+#ifdef _WIN32
 extern "C" {
 
 _declspec(dllexport) uint32_t NvOptimusEnablement = 0x00000001;
 
 }
+#endif
 
 float sawtooth(float t) {
     float scale = 2.0f / static_cast<float>(M_PI);
