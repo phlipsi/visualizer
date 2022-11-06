@@ -172,9 +172,9 @@ int main(int argc, char *argv[]) {
     parameters.add_parameter("ring.rectangle.width", [](long ms) { return sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.height", [](long ms) { return -sinf(2 * static_cast<float>(M_PI) * ms / (2 * 2000.0f / 3)) / 6.0f + 1.0f; });
     parameters.add_parameter("ring.rectangle.glow", [](long ms) { return -0.5f * sinf(2 * static_cast<float>(M_PI) * ms / 2000.0f) + 0.5f; });
-    parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
+    //parameters.add_parameter("ring.angle", [] (long ms) { return 0.0f; });
     //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(90.0f * sinf(2 * static_cast<float>(M_PI) * ms / 5000.0f)); }); // glm::radians(180.0f * sawtooth(ms / 5000.0f));
-    //parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(180.0f * sawtooth(ms / 5000.0f)); });
+    parameters.add_parameter("ring.angle", [] (long ms) { return glm::radians(180.0f * sawtooth(ms / 5000.0f)); });
     //float angle1 = 0.0f;
     //float angle2 = 0.0f;
     float scale = 0.3f;

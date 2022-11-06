@@ -1,6 +1,7 @@
 #include "wave.h"
 
 #include <cassert>
+#include <stdexcept>
 
 Wave::Wave(const std::string &filename) {
     if (SDL_LoadWAV(filename.c_str(), &spec, &buffer, &length) == nullptr) {
