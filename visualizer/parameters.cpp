@@ -43,7 +43,7 @@ std::string trim(const std::string &s) {
 Parameters::Parameters(std::istream &input) {
     std::map<std::string::size_type, float> measure_positions;
     std::string line;
-    unsigned int bpm = 0;
+    float bpm = 0;
     unsigned int meter_num = 0;
     unsigned int meter_denum = 0;
     while (std::getline(input, line) && !line.empty()) {
@@ -55,7 +55,7 @@ Parameters::Parameters(std::istream &input) {
             const std::string key = line.substr(0, sep);
             const std::string value = line.substr(sep + 1);
             if (key == "bpm") {
-                bpm = std::stoi(value);
+                bpm = std::stof(value);
             } else if (key == "meter") {
                 const std::string::size_type slash = value.find('/');
                 if (slash != std::string::npos) {
@@ -69,7 +69,7 @@ Parameters::Parameters(std::istream &input) {
     // mpb * 60000 = mspb (milliseconds per beat)
     // meter_num * spb = mspm (milliseconds per measure)
     //ms_per_beat = static_cast<float>(meter_num) * 60000.0f / static_cast<float>(bpm);
-    ms_per_measure = static_cast<float>(meter_num) * 60000.0f / static_cast<float>(bpm);
+    ms_per_measure = static_cast<float>(meter_num) * 60000.0f / bpm;
 
     std::getline(input, line);
     std::string::size_type pos = 4;

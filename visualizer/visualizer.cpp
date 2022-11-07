@@ -23,6 +23,7 @@
 #include <wave.h>
 
 #include "batch.h"
+#include "collection.h"
 #include "parameters.h"
 #include "ring.h"
 #include "scene.h"
@@ -176,6 +177,8 @@ int main(int argc, char *argv[]) {
         std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
         std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), parameters.get_parameter("ring.rectangle.glow")), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
     auto rotating_ring = std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring.angle"));
+    auto collection = std::make_shared<visualizer::Collection>(std::initializer_list<std::shared_ptr<visualizer::Object>>{ rotating_ring,
+        std::make_shared<visualizer::Translate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Circle>(glm::vec3(1.0f, 1.0f, 1.0f), parameters.get_parameter("tick")), 0.1f), glm::vec3(-1.9f, -1.4f, 0.0f)) });
     visualizer::Batch batch;
 
     const glm::mat4 model{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f))};
@@ -230,7 +233,7 @@ int main(int argc, char *argv[]) {
             std::cout << measure << std::endl;
             parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
-            rotating_ring->draw(batch, model);
+            collection->draw(batch, model);
             batch.draw();
         }
         glDisable(GL_DEPTH_TEST);

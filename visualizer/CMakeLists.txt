@@ -33,6 +33,8 @@ add_executable(visualizer
     action.cpp
     batch.h
     batch.cpp
+    collection.h
+    collection.cpp
     object.h
     parameter.h
     parameter.cpp
@@ -61,6 +63,7 @@ add_executable(visualizer
     "${CMAKE_CURRENT_SOURCE_DIR}/blur.frag"
     "${CMAKE_CURRENT_BINARY_DIR}/blur.vert.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/blur.vert"
+    "${CMAKE_SOURCE_DIR}/choreography.txt"
 )
 target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm engine)
 target_include_directories(visualizer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")

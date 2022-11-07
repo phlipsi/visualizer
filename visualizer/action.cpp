@@ -156,6 +156,19 @@ float square(float t) {
 
 }
 
+Step::Step(float length, const std::vector<float> &values)
+    : length(length), values(values) { }
+
+float Step::get_value(float measure,
+                      float previous_end,
+                      const Action *previous,
+                      float next_start,
+                      const Action *next) const
+{
+    const auto pos = static_cast<int>(measure / length) % values.size();
+    return values[pos];
+}
+
 std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params) {
     if (name == "constant") {
         return std::make_unique<Constant>(params.at(0));
@@ -171,6 +184,8 @@ std::unique_ptr<Action> create_action(const std::string &name, const std::vector
         return std::make_unique<Steady>(params.at(0), params.at(1));
     } else if (name == "square") {
         return std::make_unique<Periodic>(square, params.at(0), params.at(1), params.at(2), params.at(3));
+    } else if (name == "step") {
+        return std::make_unique<Step>(params.at(0), std::vector<float>(params.begin() + 1, params.end()));
     } else {
         throw std::runtime_error("Unknown action " + name);
     }

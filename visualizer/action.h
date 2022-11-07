@@ -121,6 +121,21 @@ private:
 
 };
 
+class Step : public Action {
+public:
+    Step(float length, const std::vector<float> &values);
+
+    float get_value(float measure,
+                    float previous_end,
+                    const Action *previous,
+                    float next_start,
+                    const Action *next) const override;
+
+private:
+    float length;
+    std::vector<float> values;
+};
+
 std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params);
 
 }

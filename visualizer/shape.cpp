@@ -2,7 +2,12 @@
 
 #include "batch.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace visualizer {
+
+Shape::Shape(const glm::vec3 &color, const float &glow)
+    : Shape(color, glow, {}) { }
 
 Shape::Shape(const glm::vec3 &color, const float &glow, std::initializer_list<glm::mat4> triangles)
   : color(color), glow(&glow), triangles(triangles)
@@ -12,6 +17,10 @@ void Shape::draw(Batch &batch, const glm::mat4 &model) const {
     for (const auto &x : triangles) {
         batch.add_triangle(model * x, color, *glow);
     }
+}
+
+void Shape::add_triangle(const glm::mat4 &t) {
+    triangles.push_back(t);
 }
 
 namespace {
@@ -48,5 +57,22 @@ const glm::mat4 rectangle_lower_right(
 Rectangle::Rectangle(const glm::vec3 &color, const float &glow)
   : Shape(color, glow, { rectangle_upper_left, rectangle_lower_right })
 { }
+
+Circle::Circle(const glm::vec3 &color, const float &glow)
+    : Shape(color, glow)
+{
+    const int num = 16;
+    for (int i = 0; i < num; ++i) {
+        const float alpha = glm::radians(i * 360.0f / num);
+        const float beta  = glm::radians((i + 1) * 360.0f / num);
+        const glm::mat4 t(
+            0.0f, 0.0f, 0.0f, 1.0f,
+            0.5f * std::cos(alpha), 0.5f * std::sin(alpha), 0.0f, 1.0f,
+            0.5f * std::cos(beta), 0.5f * std::sin(beta), 0.0f, 1.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        add_triangle(t);
+    }
+}
 
 }

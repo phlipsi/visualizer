@@ -1,7 +1,8 @@
-bpm: 94
+bpm: 93.5
 meter: 4/4
 
-time                   0                        5               6               8                   12
+time                   0                                5               6               8                   12
+tick                   step,0.125,0,0.1,0,0.1,0,0.1,0,1
 #ring.angle             steady,360,0
 ring.angle             constant,0
 
@@ -9,10 +10,10 @@ ring.angle             constant,0
 #ring.triangle.width    sine,0.5,0,1.0,0.15
 #ring.triangle.height   sine,0.5,0,1.0,-0.15
 #ring.triangle.glow     sine,4,0,0.5,0.5
-ring.triangle.angle    square,2,0,0,90                                          steady,90,0
+ring.triangle.angle    square,2,0,0,90                                                  steady,90,0
 ring.triangle.width    constant,1
 ring.triangle.height   constant,1
-ring.triangle.glow     constant,1               smooth          constant,0      sine,2,1,0.5,0.5
+ring.triangle.glow     constant,1                       smooth          constant,0      sine,2,1,0.5,0.5
 
 #ring.rectangle.angle   sine,4,1,0,360
 #ring.rectangle.width   sine,0.5,0,1.0,0.15
