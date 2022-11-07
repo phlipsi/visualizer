@@ -61,10 +61,14 @@ void play_buffer(const Wave &wav, size_t &offset, Uint8* data, int len) {
     if (offset >= wav.get_length()) {
         return;
     }
-    len = std::min<unsigned long long>(len, wav.get_length() - offset);
+    const size_t remainder = wav.get_length() - offset;
+    int actual_len = len;
+    if (remainder < len) {
+        actual_len = static_cast<int>(remainder);
+    }
     memset(data, 0, len);
-    SDL_MixAudioFormat(data, wav.get_buffer() + offset, wav.get_spec().format, len, SDL_MIX_MAXVOLUME);
-    offset += len;
+    SDL_MixAudioFormat(data, wav.get_buffer() + offset, wav.get_spec().format, actual_len, SDL_MIX_MAXVOLUME);
+    offset += actual_len;
 }
 
 int main(int argc, char *argv[]) {

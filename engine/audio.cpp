@@ -13,7 +13,7 @@ Audio::Audio(const SDL_AudioSpec &spec)
     SDL_AudioSpec internal_spec = spec;
     internal_spec.callback = internal_callback;
     internal_spec.userdata = this;
-    id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(2, 0), 0, &internal_spec, &this->spec, 0);
+    id = SDL_OpenAudioDevice(nullptr, 0, &internal_spec, &this->spec, 0);
     if (id < 0) {
         throw std::runtime_error("Can't open audio device");
     }

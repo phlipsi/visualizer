@@ -12,9 +12,9 @@ Ring::Ring(unsigned int num_repetitions, float radius,
 { }
 
 void Ring::draw(Batch &batch, const glm::mat4 &model) const {
-    const int num_objects = objects.size();
+    const auto num_objects = objects.size();
     const float angle = 360.0f / (num_repetitions * num_objects);
-    for (int i = 0; i < num_repetitions; ++i) {
+    for (unsigned int i = 0; i < num_repetitions; ++i) {
         for (int j = 0; j < num_objects; j++) {
             glm::mat4 rotation = model;
             rotation = glm::rotate(rotation, glm::radians(angle * (j + num_objects * i)), glm::vec3(0.0f, 0.0f, 1.0f));

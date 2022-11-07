@@ -23,7 +23,7 @@ void Parameter::set_measure(float measure) {
         throw std::runtime_error("Missing initial action");
     }
     const Action *previous = nullptr;
-    unsigned long previous_end = 0;
+    float previous_end = 0;
     if (current != actions.begin()) {
         const auto previous_it = std::prev(current);
         previous = previous_it->second.get();
@@ -31,7 +31,7 @@ void Parameter::set_measure(float measure) {
     }
     const Action *next = nullptr;
     const auto next_it = std::next(current);
-    unsigned long next_start = 0;
+    float next_start = 0;
     if (next_it != actions.end()) {
         next = next_it->second.get();
         next_start = next_it->first - current->first;

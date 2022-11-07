@@ -1,5 +1,7 @@
 #include "parameters.h"
 
+#include <SDL_stdinc.h>
+
 #include <cmath>
 #include <stdexcept>
 

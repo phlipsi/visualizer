@@ -1,5 +1,7 @@
 #include "action.h"
 
+#include <SDL_stdinc.h>
+
 #include <cmath>
 #include <stdexcept>
 
@@ -149,7 +151,7 @@ float square(float t) {
     result += sinf(2 * static_cast<float>(M_PI) * 1.0f * t) / 1.0f;
     result += sinf(2 * static_cast<float>(M_PI) * 3.0f * t) / 3.0f;
     result += sinf(2 * static_cast<float>(M_PI) * 5.0f * t) / 5.0f;
-    return 4.0 * result / static_cast<float>(M_PI);
+    return 4.0f * result / static_cast<float>(M_PI);
 }
 
 }
