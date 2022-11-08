@@ -3,7 +3,7 @@ meter: 4/4
 
 time                   0                                5               6               8                   16
 tick                   step,0.125,1,0,0.1,0,0.1,0,0.1,0
-ring.angle             steady,45,0                                      linear          constant,0          steady,-45,0
+ring.angle             sawtoothd,6,0,360,360                            linear          constant,0          sawtoothd,6,0,360,-360
 
 ring.triangle.width    sine,0.5,0,1.0,0.15
 ring.triangle.height   sine,0.5,0,1.0,-0.15

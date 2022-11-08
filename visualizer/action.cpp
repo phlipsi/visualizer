@@ -154,6 +154,10 @@ float square(float t) {
     return 4.0f * result / static_cast<float>(M_PI);
 }
 
+float sawtoothd(float t) {
+    return t - 2 * std::floor((t - 1.0f) / 2.0f) - 2.0f;
+}
+
 }
 
 Step::Step(float length, const std::vector<float> &values)
@@ -184,6 +188,8 @@ std::unique_ptr<Action> create_action(const std::string &name, const std::vector
         return std::make_unique<Steady>(params.at(0), params.at(1));
     } else if (name == "square") {
         return std::make_unique<Periodic>(square, params.at(0), params.at(1), params.at(2), params.at(3));
+    } else if (name == "sawtoothd") {
+        return std::make_unique<Periodic>(sawtoothd, params.at(0), params.at(1), params.at(2), params.at(3));
     } else if (name == "step") {
         return std::make_unique<Step>(params.at(0), std::vector<float>(params.begin() + 1, params.end()));
     } else {
