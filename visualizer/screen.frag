@@ -3,6 +3,8 @@ in vec2 vertex_texture_coord;
 
 uniform sampler2D screen_texture;
 uniform sampler2D glow_texture;
+uniform float exposure;
+uniform float gamma;
 
 out vec4 FragColor;
 
@@ -12,7 +14,7 @@ void main() {
     vec3 glow = texture(glow_texture, vertex_texture_coord).rgb;
     color += glow;
     //FragColor = vec4(color, 1.0);
-    vec3 result = vec3(1.0) - exp(-color);
-    result = pow(result, vec3(1.0 / 2.0));
+    vec3 result = vec3(1.0) - exp(-color * exposure);
+    result = pow(result, vec3(1.0 / gamma));
     FragColor = vec4(result, 1.0);
 }

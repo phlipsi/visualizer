@@ -58,7 +58,7 @@ void logger(GLenum source,
     std::cout << message << std::endl;
 }
 
-void play_buffer(const Wave &wav, size_t &offset, Uint8* data, int len) {
+void play_buffer(const Wave &wav, size_t &offset, Uint64 &timestamp, Uint8* data, int len) {
     if (offset >= wav.get_length()) {
         return;
     }
@@ -70,6 +70,7 @@ void play_buffer(const Wave &wav, size_t &offset, Uint8* data, int len) {
     memset(data, 0, len);
     SDL_MixAudioFormat(data, wav.get_buffer() + offset, wav.get_spec().format, actual_len, SDL_MIX_MAXVOLUME);
     offset += actual_len;
+    timestamp = SDL_GetTicks64();
 }
 
 int main(int argc, char *argv[]) {
@@ -79,9 +80,11 @@ int main(int argc, char *argv[]) {
     }
 
     size_t offset = 0;
+    Uint64 timestamp = 0;
     Wave wav(argv[2]);
-    Audio audio(wav.get_spec());
-    audio.set_callback([&wav, &offset] (Uint8 *data, int len) { play_buffer(wav, offset, data, len); });
+    const SDL_AudioSpec spec = wav.get_spec();
+    Audio audio(spec);
+    audio.set_callback([&wav, &offset, &timestamp] (Uint8 *data, int len) { play_buffer(wav, offset, timestamp, data, len); });
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -111,9 +114,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "Messages:" << std::endl;
     glEnable(GL_DEBUG_OUTPUT);
-    //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     glDebugMessageCallback(logger, nullptr);
 
     Program scene_shader;
@@ -166,7 +167,6 @@ int main(int argc, char *argv[]) {
 
     Quad quad;
 
-
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
@@ -183,39 +183,81 @@ int main(int argc, char *argv[]) {
 
     const glm::mat4 model{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f))};
 
-    const float freq = static_cast<float>(SDL_GetPerformanceFrequency());
     const float ms_per_measure = parameters.get_ms_per_measure();
-    Uint32 old_ticks;
-    Uint32 ticks = SDL_GetTicks();
+    const size_t sample_size = spec.channels * (SDL_AUDIO_BITSIZE(spec.format) >> 3);
+    const float ms_per_offset = 1000.0 / (spec.freq * sample_size);
+    const size_t alignment = std::numeric_limits<size_t>::max() << (sample_size >> 1);
+    // 0x0000 0x0001 0x0002 0x0003 0x0004 0x0005 0x0006 0x0007
+    // L      l      R      r      L      l      R      r
+    const size_t rough_measure_offset = static_cast<size_t>(ms_per_measure / ms_per_offset) & alignment;
+
+    float exposure = 1.0f;
+    float gamma = 2.0f;
+    Uint32 old_fps_ticks;
+    Uint32 fps_ticks = SDL_GetTicks();
     const int max_cool_down = 10;
     int cool_down = max_cool_down;
     bool quit = false;
     audio.pause(false);
-    const Uint64 start = SDL_GetPerformanceCounter();
     while (!quit) {
-        old_ticks = ticks;
+        old_fps_ticks = fps_ticks;
         SDL_Event event;
-        while(SDL_PollEvent(&event))
-        {
-            switch(event.type)
-            {
+
+        long offset_shift = 0;
+        while(SDL_PollEvent(&event)) {
+            switch(event.type) {
                 case SDL_QUIT:
                     quit = true;
                     break;
                 case SDL_KEYUP:
-                    if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    switch (event.key.keysym.sym) {
+                    case SDLK_ESCAPE:
                         quit = true;
-                    } else if (event.key.keysym.sym == SDLK_LEFT) {
-                        if (offset > 10 * wav.get_spec().freq) {
-                            offset -= 10 * wav.get_spec().freq;
+                        break;
+                    case SDLK_LEFT:
+                        offset_shift = -rough_measure_offset;
+                        break;
+                    case SDLK_RIGHT:
+                        offset_shift = rough_measure_offset;
+                        break;
+                    case SDLK_UP:
+                        exposure += 0.1f;
+                        break;
+                    case SDLK_DOWN:
+                        if (exposure > 0.1f) {
+                            exposure -= 0.1f;
                         } else {
-                            offset = 0;
+                            exposure = 0.0f;
                         }
-                    } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                        offset += 10 * wav.get_spec().freq;
+                        break;
+                    case SDLK_KP_PLUS:
+                        gamma += 0.1f;
+                        break;
+                    case SDLK_KP_MINUS:
+                        if (gamma > 0.1f) {
+                            gamma -= 0.1f;
+                        } else {
+                            gamma = 0.0f;
+                        }
+                        break;
+                    case SDLK_PAGEUP:
+                        offset_shift = -4 * rough_measure_offset;
+                        break;
+                    case SDLK_PAGEDOWN:
+                        offset_shift = 4 * rough_measure_offset;
+                        break;
                     }
                     break;
             }
+        }
+        if (offset_shift != 0) {
+            const auto lock = audio.lock();
+            if (offset_shift < 0 && offset < -offset_shift) {
+                offset = 0;
+            } else {
+                offset += offset_shift;
+            }
+            timestamp = SDL_GetTicks64();
         }
 
         {
@@ -224,12 +266,13 @@ int main(int argc, char *argv[]) {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            const Uint64 counter = SDL_GetPerformanceCounter();
-            //const Uint64 ticks = SDL_GetTicks64();
             auto usage = scene_shader.use();
-            //parameters.set_time(ticks);
-            const float t = 1000.0f * static_cast<float>(counter - start) / freq;
-            const float measure = t / ms_per_measure - 0.1f;
+            float t = 0.0f;
+            {
+                const auto lock = audio.lock();
+                t = static_cast<float>(offset) * ms_per_offset + (SDL_GetTicks64() - timestamp);
+            }
+            const float measure = t / ms_per_measure;
             std::cout << measure << std::endl;
             parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
@@ -291,6 +334,8 @@ int main(int argc, char *argv[]) {
             glBindTexture(GL_TEXTURE_2D, postprocessing2.get_texture_id());
             usage.set_uniform("screen_texture", 0);
             usage.set_uniform("glow_texture", 1);
+            usage.set_uniform("exposure", exposure);
+            usage.set_uniform("gamma", gamma);
             //auto colors = scene.bind_colors_as_source(GL_TEXTURE0);
             //auto glow = postprocessing2.bind_as_source(GL_TEXTURE1);
 
@@ -299,8 +344,8 @@ int main(int argc, char *argv[]) {
         SDL_GL_SwapWindow(window);
 
         if (cool_down == 0) {
-            ticks = SDL_GetTicks();
-            const std::string fps = std::to_string(max_cool_down * 1000.0 / static_cast<double>(ticks - old_ticks));
+            fps_ticks = SDL_GetTicks();
+            const std::string fps = std::to_string(max_cool_down * 1000.0 / static_cast<double>(fps_ticks - old_fps_ticks));
             SDL_SetWindowTitle(window, fps.c_str());
             cool_down = max_cool_down;
         } else {

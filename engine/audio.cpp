@@ -3,6 +3,16 @@
 #include <iostream>
 #include <stdexcept>
 
+Audio::Lock::Lock(SDL_AudioDeviceID id)
+  : id(id)
+{
+    SDL_LockAudioDevice(id);
+}
+
+Audio::Lock::~Lock() {
+    SDL_UnlockAudioDevice(id);
+}
+
 Audio::Audio(const SDL_AudioSpec &spec)
 {
     int num_audio_dev = SDL_GetNumAudioDevices(false);
@@ -33,6 +43,10 @@ const SDL_AudioSpec &Audio::get_spec() const {
 
 void Audio::pause(bool wait) const {
     SDL_PauseAudioDevice(id, wait);
+}
+
+Audio::Lock Audio::lock() const {
+    return Lock(id);
 }
 
 void Audio::internal_callback(void *userdata, Uint8 *data, int len) {
