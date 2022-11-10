@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include <functional>
 #include <memory>
 #include <vector>
@@ -72,39 +74,6 @@ private:
     float amplitude;
 };
 
-class Sine : public Action {
-public:
-    Sine(float measures, float start, float baseline, float amplitude);
-
-    float get_value(float measure,
-                    float previous_end,
-                    const Action *previous,
-                    float next_start,
-                    const Action *next) const override;
-private:
-    float measures;
-    float start;
-    float baseline;
-    float amplitude;
-};
-
-class Sawtooth : public Action {
-public:
-    Sawtooth(float measures, float start, float baseline, float amplitude);
-
-    float get_value(float measure,
-                    float previous_end,
-                    const Action *previous,
-                    float next_start,
-                    const Action *next) const override;
-
-private:
-    float measures;
-    float start;
-    float baseline;
-    float amplitude;
-};
-
 class Steady : public Action {
 public:
     Steady(float increase_per_measure, float start);
@@ -137,5 +106,7 @@ private:
 };
 
 std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params);
+
+std::unique_ptr<Action> create_action(const nlohmann::json &action);
 
 }

@@ -1,0 +1,152 @@
+{
+    "general": {
+        "bpm": 93.5,
+        "meter": "4/4"
+    },
+    "parameters": {
+        "tick": {
+            "0.0": {
+                "action": {
+                    "name": "step",
+                    "parameters": {
+                        "length": 0.125,
+                        "values": [ 1.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0 ]
+                    }
+                }
+            }
+        },
+        "ring.angle": {
+            "0.0": {
+                "_action": {
+                    "name": "sawtooth",
+                    "parameters": {
+                        "period": 6.0,
+                        "phase": 1.5,
+                        "amplitude": 360.0
+                    }
+                },
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 2.0,
+                        "amplitude": 90.0
+                    }
+                }
+                
+            },
+            "5.0": {
+                "transition": {
+                    "start": -0.5,
+                    "end": 0.5
+                },
+                "_action": {
+                    "name": "sawtooth",
+                    "parameters": {
+                        "period": 3.0,
+                        "phase": 1.5,
+                        "amplitude": -360.0
+                    }
+                },
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 4.0,
+                        "amplitude": -90.0
+                    }
+                }
+            }
+        },
+        "ring.triangle.angle": {
+            "0.0": {
+                "action": {
+                    "name": "fourier-square",
+                    "parameters": {
+                        "period": 2.0,
+                        "amplitude": 90.0
+                    }
+                }
+            }
+        },
+        "ring.triangle.height": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "offset": 1.0,
+                        "amplitude": 0.1
+                    }
+                }
+            }
+        },
+        "ring.triangle.width": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "offset": 1.0,
+                        "amplitude": -0.1
+                    }
+                }
+            }
+        },
+        "ring.triangle.glow": {
+            "0.0": {
+                "action": {
+                    "name": "constant",
+                    "parameters": {
+                        "value": 1.0
+                    }
+                }
+            }
+        },
+        "ring.rectangle.angle": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "amplitude": 360.0
+                    }
+                }
+            }
+        },
+        "ring.rectangle.height": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "offset": 1.0,
+                        "amplitude": 0.1
+                    }
+                }
+            }
+        },
+        "ring.rectangle.width": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "offset": 1.0,
+                        "amplitude": -0.1
+                    }
+                }
+            }
+        },
+        "ring.rectangle.glow": {
+            "0.0": {
+                "action": {
+                    "name": "sine",
+                    "parameters": {
+                        "period": 6.0,
+                        "offset": 0.5,
+                        "amplitude": 0.5
+                    }
+                }
+            }
+        }
+    }
+}

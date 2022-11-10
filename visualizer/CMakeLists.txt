@@ -65,5 +65,10 @@ add_executable(visualizer
     "${CMAKE_CURRENT_SOURCE_DIR}/blur.vert"
     "${CMAKE_SOURCE_DIR}/choreography.txt"
 )
-target_link_libraries(visualizer PRIVATE CONAN_PKG::sdl CONAN_PKG::glew CONAN_PKG::glm engine)
+target_link_libraries(visualizer PRIVATE
+    CONAN_PKG::sdl
+    CONAN_PKG::glew
+    CONAN_PKG::glm
+    CONAN_PKG::nlohmann_json
+    engine)
 target_include_directories(visualizer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")

@@ -85,51 +85,6 @@ float Periodic::get_value(float measure,
     return amplitude * func((measure + start) / measures) + baseline;
 }
 
-Sine::Sine(float measures, float start, float baseline, float amplitude)
-  : measures(measures),
-    start(start),
-    baseline(baseline),
-    amplitude(amplitude)
-{ }
-
-float Sine::get_value(float measure,
-                      float previous_end,
-                      const Action *previous,
-                      float next_start,
-                      const Action *next) const
-{
-    return amplitude * sinf(2 * static_cast<float>(M_PI) * (measure + start) / measures) + baseline;
-}
-
-Sawtooth::Sawtooth(float measures, float start, float baseline, float amplitude)
-  : measures(measures),
-    start(start),
-    baseline(baseline),
-    amplitude(amplitude)
-{ }
-
-namespace {
-
-float sawtooth(float t) {
-    float scale = 2.0f / static_cast<float>(M_PI);
-    float sum = sinf(static_cast<float>(M_PI) * t);
-    sum -= sinf(2 * static_cast<float>(M_PI) * t) / 2.0f;
-    sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0f;
-    sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0f;
-    return scale * sum;
-}
-
-}
-
-float Sawtooth::get_value(float measure,
-                          float previous_end,
-                          const Action *previous,
-                          float next_start,
-                          const Action *next) const
-{
-    return amplitude * sawtooth((measure + start) / measures) + baseline;
-}
-
 Steady::Steady(float increase_per_measure, float start)
   : increase_per_measure(increase_per_measure),
     start(start)
@@ -146,7 +101,7 @@ float Steady::get_value(float measure,
 
 namespace {
 
-float square(float t) {
+float fourier_square(float t) {
     float result = 0;
     result += sinf(2 * static_cast<float>(M_PI) * 1.0f * t) / 1.0f;
     result += sinf(2 * static_cast<float>(M_PI) * 3.0f * t) / 3.0f;
@@ -154,8 +109,21 @@ float square(float t) {
     return 4.0f * result / static_cast<float>(M_PI);
 }
 
-float sawtoothd(float t) {
+float fourier_sawtooth(float t) {
+    float scale = 2.0f / static_cast<float>(M_PI);
+    float sum = sinf(static_cast<float>(M_PI) * t);
+    sum -= sinf(2 * static_cast<float>(M_PI) * t) / 2.0f;
+    sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0f;
+    sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0f;
+    return scale * sum;
+}
+
+float sawtooth(float t) {
     return t - 2 * std::floor((t - 1.0f) / 2.0f) - 2.0f;
+}
+
+float sine(float t) {
+    return std::sin(2 * static_cast<float>(M_PI) * t);
 }
 
 }
@@ -173,25 +141,34 @@ float Step::get_value(float measure,
     return values[pos];
 }
 
-std::unique_ptr<Action> create_action(const std::string &name, const std::vector<float> &params) {
-    if (name == "constant") {
-        return std::make_unique<Constant>(params.at(0));
-    } else if (name == "linear") {
-        return std::make_unique<Linear>();
-    } else if (name == "smooth") {
-        return std::make_unique<Smooth>();
+std::unique_ptr<Action> create_action(const nlohmann::json &action) {
+    const std::string name = action["name"].get<std::string>();
+    const auto &parameters = action["parameters"];
+    if (name == "step") {
+        const float length = parameters["length"].get<float>();
+        const std::vector<float> params = parameters["values"].get<std::vector<float>>();
+        return std::make_unique<Step>(length, params);
     } else if (name == "sine") {
-        return std::make_unique<Sine>(params.at(0), params.at(1), params.at(2), params.at(3));
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        const float amplitude = parameters.value<float>("amplitude", 1.0f);
+        return std::make_unique<Periodic>(sine, period, phase, offset, amplitude);
+    } else if (name == "constant") {
+        const float value = parameters["value"].get<float>();
+        return std::make_unique<Constant>(value);
+    } else if (name == "fourier-square") {
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        const float amplitude = parameters.value<float>("amplitude", 1.0f);
+        return std::make_unique<Periodic>(fourier_square, period, phase, offset, amplitude);
     } else if (name == "sawtooth") {
-        return std::make_unique<Sawtooth>(params.at(0), params.at(1), params.at(2), params.at(3));
-    } else if (name == "steady") {
-        return std::make_unique<Steady>(params.at(0), params.at(1));
-    } else if (name == "square") {
-        return std::make_unique<Periodic>(square, params.at(0), params.at(1), params.at(2), params.at(3));
-    } else if (name == "sawtoothd") {
-        return std::make_unique<Periodic>(sawtoothd, params.at(0), params.at(1), params.at(2), params.at(3));
-    } else if (name == "step") {
-        return std::make_unique<Step>(params.at(0), std::vector<float>(params.begin() + 1, params.end()));
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        const float amplitude = parameters.value<float>("amplitude", 1.0f);
+        return std::make_unique<Periodic>(sawtooth, period, phase, offset, amplitude);
     } else {
         throw std::runtime_error("Unknown action " + name);
     }

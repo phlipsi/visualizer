@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
                 t = static_cast<float>(offset) * ms_per_offset + (SDL_GetTicks64() - timestamp);
             }
             const float measure = t / ms_per_measure;
-            std::cout << measure << std::endl;
+            std::cout << measure << "; " << parameters.get_parameter("ring.angle") << std::endl;
             parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
             collection->draw(batch, model);
