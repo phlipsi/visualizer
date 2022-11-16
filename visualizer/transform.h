@@ -50,9 +50,13 @@ private:
 class Translate : public Transform {
 public:
     Translate(std::shared_ptr<Object> object, const glm::vec3 &direction);
+    Translate(std::shared_ptr<Object> object, float x, float y, const float &z);
 
 private:
-    const glm::vec3 *direction;
+    float x;
+    float y;
+    float z;
+    const float *rz;
 
     glm::mat4 get_transform(const glm::mat4& model) const override;
 };

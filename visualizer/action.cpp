@@ -58,7 +58,7 @@ float fourier_sawtooth(float t) {
 }
 
 float sawtooth(float t) {
-    return t - 2 * std::floor((t - 1.0f) / 2.0f) - 2.0f;
+    return 2.0f * t - 2.0f * std::floor((2.0f * t - 1.0f) / 2.0f) - 2.0f;
 }
 
 float sine(float t) {
@@ -104,10 +104,16 @@ std::unique_ptr<Action> create_action(float start, const nlohmann::json &action)
         const float offset = parameters.value<float>("offset", 0.0f);
         const float amplitude = parameters.value<float>("amplitude", 1.0f);
         return std::make_unique<Periodic>(start, sawtooth, period, phase, offset, amplitude);
+    } else if (name == "fourier-sawtooth") {
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        const float amplitude = parameters.value<float>("amplitude", 1.0f);
+        return std::make_unique<Periodic>(start, fourier_sawtooth, period, phase, offset, amplitude);
     } else if (name == "linear") {
         const float increase = parameters["increase"].get<float>();
-        const float start = parameters.value<float>("start", 0.0f);
-        return std::make_unique<Linear>(start, increase, start);
+        const float initial = parameters.value<float>("initial", 0.0f);
+        return std::make_unique<Linear>(start, increase, initial);
     } else {
         throw std::runtime_error("Unknown action " + name);
     }

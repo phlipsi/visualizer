@@ -174,11 +174,15 @@ int main(int argc, char *argv[]) {
     visualizer::Parameters parameters(choreography);
     parameters.set_debug_output("parameters.csv");
     float scale = 0.3f;
-    auto ring = std::make_shared<visualizer::Ring>(6, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
-        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), parameters.get_parameter("ring.rectangle.glow")), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")) });
-    auto rotating_ring = std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring.angle"));
-    auto collection = std::make_shared<visualizer::Collection>(std::initializer_list<std::shared_ptr<visualizer::Object>>{ rotating_ring,
+    auto ring = std::make_shared<visualizer::Ring>(3, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow1")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), parameters.get_parameter("ring.rectangle.glow1")), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle")),
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow2")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),
+        std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Rectangle>(glm::vec3(1.0f, 0.0f, 0.0f), parameters.get_parameter("ring.rectangle.glow2")), parameters.get_parameter("ring.rectangle.width"), parameters.get_parameter("ring.rectangle.height")), scale), parameters.get_parameter("ring.rectangle.angle"))});
+    auto rotating_ring1 = std::make_shared<visualizer::Translate>(std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring1.angle")), 0.0, 0.0, parameters.get_parameter("ring1.z"));
+    auto rotating_ring2 = std::make_shared<visualizer::Translate>(std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring2.angle")), 0.0, 0.0, parameters.get_parameter("ring2.z"));
+    auto rotating_ring3 = std::make_shared<visualizer::Translate>(std::make_shared<visualizer::Rotate>(ring, parameters.get_parameter("ring3.angle")), 0.0, 0.0, parameters.get_parameter("ring3.z"));
+    auto collection = std::make_shared<visualizer::Collection>(std::initializer_list<std::shared_ptr<visualizer::Object>>{ rotating_ring1, rotating_ring2, rotating_ring3,
         std::make_shared<visualizer::Translate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Circle>(glm::vec3(1.0f, 1.0f, 1.0f), parameters.get_parameter("tick")), 0.1f), glm::vec3(-1.9f, -1.4f, 0.0f)) });
     visualizer::Batch batch;
 

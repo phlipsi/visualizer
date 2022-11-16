@@ -41,11 +41,23 @@ glm::mat4 Rotate::get_transform(const glm::mat4 &model) const {
 
 Translate::Translate(std::shared_ptr<Object> object, const glm::vec3 &direction)
   : Transform(object),
-    direction(&direction)
+    x(direction.x),
+    y(direction.y),
+    z(direction.z),
+    rz(nullptr)
+{ }
+
+Translate::Translate(std::shared_ptr<Object> object, float x, float y, const float &z)
+  : Transform(object),
+    x(x),
+    y(y),
+    z(0.0),
+    rz(&z)
 { }
 
 glm::mat4 Translate::get_transform(const glm::mat4 &model) const {
-    return glm::translate(model, *direction);
+    glm::vec3 direction(x, y, rz != nullptr ? *rz : z);
+    return glm::translate(model, direction);
 }
 
 }
