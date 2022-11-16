@@ -185,11 +185,11 @@ int main(int argc, char *argv[]) {
 
     const float ms_per_measure = parameters.get_ms_per_measure();
     const size_t sample_size = spec.channels * (SDL_AUDIO_BITSIZE(spec.format) >> 3);
-    const float ms_per_offset = 1000.0 / (spec.freq * sample_size);
+    const float ms_per_offset = 1000.0f / (spec.freq * sample_size);
     const size_t alignment = std::numeric_limits<size_t>::max() << (sample_size >> 1);
     // 0x0000 0x0001 0x0002 0x0003 0x0004 0x0005 0x0006 0x0007
     // L      l      R      r      L      l      R      r
-    const size_t rough_measure_offset = static_cast<size_t>(ms_per_measure / ms_per_offset) & alignment;
+    const ptrdiff_t rough_measure_offset = static_cast<ptrdiff_t>(ms_per_measure / ms_per_offset) & alignment;
 
     float exposure = 1.0f;
     float gamma = 2.0f;
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
         old_fps_ticks = fps_ticks;
         SDL_Event event;
 
-        long offset_shift = 0;
+        ptrdiff_t offset_shift = 0;
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
         }
         if (offset_shift != 0) {
             const auto lock = audio.lock();
-            if (offset_shift < 0 && offset < -offset_shift) {
+            if (offset_shift < 0 && offset < static_cast<size_t>(-offset_shift)) {
                 offset = 0;
             } else {
                 offset += offset_shift;
@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
                 t = static_cast<float>(offset) * ms_per_offset + (SDL_GetTicks64() - timestamp);
             }
             const float measure = t / ms_per_measure;
-            std::cout << measure << "; " << parameters.get_parameter("ring.angle") << std::endl;
+            std::cout << measure << std::endl;
             parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
             collection->draw(batch, model);

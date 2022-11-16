@@ -17,27 +17,39 @@
         },
         "ring.angle": {
             "0.0": {
-                "_action": {
+                "action": {
                     "name": "sawtooth",
                     "parameters": {
-                        "period": 6.0,
-                        "phase": 1.5,
+                        "period": 4.0,
+                        "phase": 4.0,
                         "amplitude": 360.0
                     }
                 },
-                "action": {
+                "__action": {
                     "name": "sine",
                     "parameters": {
                         "period": 2.0,
                         "amplitude": 90.0
                     }
+                },
+                "_action": {
+                    "name": "constant",
+                    "parameters": {
+                        "value": 0.0
+                    }
+                },
+                "___action": {
+                    "name": "linear",
+                    "parameters": {
+                        "increase": 45.0
+                    }
                 }
-                
             },
-            "5.0": {
+            "6.0": {
                 "transition": {
-                    "start": -0.5,
-                    "end": 0.5
+                    "start": -1.0,
+                    "end": 1.0,
+                    "_modulus": 360.0
                 },
                 "_action": {
                     "name": "sawtooth",

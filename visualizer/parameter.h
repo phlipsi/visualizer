@@ -1,8 +1,9 @@
 #pragma once
 
 #include "action.h"
+#include "transition.h"
 
-#include <map>
+#include <set>
 #include <memory>
 
 namespace visualizer {
@@ -15,12 +16,13 @@ public:
 
     const float &get_value() const { return value; }
 private:
-    typedef std::map<float, std::unique_ptr<Action>> ActionMap;
-    typedef std::map<float, float> TransitionMap;
+
+    typedef std::set<std::unique_ptr<Action>> Actions;
+    typedef std::set<Transition> Transitions;
 
     float value;
-    ActionMap actions;
-    TransitionMap transitions;
+    Actions actions;
+    Transitions transitions;
 };
 
 }

@@ -30,9 +30,10 @@ Parameters::Parameters(std::istream &input) {
             const auto &values = timestamp.value();
             if (values.contains("transition")) {
                 const auto transition = values["transition"];
-                this->parameters[name].add_transition(measure + transition["start"].get<float>(), measure + transition["end"].get<float>());
+                this->parameters[name].add_transition(measure + transition["start"].get<float>(),
+                                                      measure + transition["end"].get<float>());
             }
-            this->parameters[name].add_action(measure, create_action(values["action"]));
+            this->parameters[name].add_action(measure, create_action(measure, values["action"]));
         }
     }
 }
