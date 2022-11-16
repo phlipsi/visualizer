@@ -172,6 +172,7 @@ int main(int argc, char *argv[]) {
     //glViewport(0, 0, width, height);
     std::ifstream choreography(argv[1]);
     visualizer::Parameters parameters(choreography);
+    parameters.set_debug_output("parameters.csv");
     float scale = 0.3f;
     auto ring = std::make_shared<visualizer::Ring>(6, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
         std::make_shared<visualizer::Rotate>(std::make_shared<visualizer::Scale>(std::make_shared<visualizer::Deform>(std::make_shared<visualizer::Triangle>(glm::vec3(1.0f, 1.0f, 0.0f), parameters.get_parameter("ring.triangle.glow")), parameters.get_parameter("ring.triangle.width"), parameters.get_parameter("ring.triangle.height")), scale), parameters.get_parameter("ring.triangle.angle")),

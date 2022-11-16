@@ -39,9 +39,29 @@ Parameters::Parameters(std::istream &input) {
 }
 
 void Parameters::set_measure(float measure) {
+    const bool debugging = debug_output.is_open();
+    if (debugging) {
+        debug_output << measure;
+    }
     for (auto &entry : parameters) {
         entry.second.set_measure(measure);
+        if (debugging) {
+            debug_output << ';' << entry.second.get_value();
+        }
     }
+    if (debugging) {
+        debug_output << '\n';
+    }
+}
+
+void Parameters::set_debug_output(const std::string &filename) {
+    debug_output.close();
+    debug_output.open(filename);
+    debug_output << "measure";
+    for (const auto &entry : parameters) {
+        debug_output << ';' << entry.first;
+    }
+    debug_output << '\n';
 }
 
 void Parameters::add_action(const std::string &name, float measure, std::unique_ptr<Action> action) {

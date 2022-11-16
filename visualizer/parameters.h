@@ -2,6 +2,7 @@
 
 #include "parameter.h"
 
+#include <fstream>
 #include <istream>
 #include <map>
 #include <memory>
@@ -16,6 +17,7 @@ public:
     explicit Parameters(std::istream &input);
 
     void set_measure(float measure);
+    void set_debug_output(const std::string &filename);
 
     void add_action(const std::string &name, float measure, std::unique_ptr<Action> action);
 
@@ -23,6 +25,7 @@ public:
 
     float get_ms_per_measure() const { return ms_per_measure; }
 private:
+    std::ofstream debug_output;
     float ms_per_measure;
     std::map<std::string, Parameter> parameters;
 };
