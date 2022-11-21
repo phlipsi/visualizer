@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     SDL_AudioSpec spec;
     Uint8 *buffer;
     Uint32 length;
-    if (SDL_LoadWAV("C:\\Users\\pwaehnert\\Downloads\\dream.wav", &spec, &buffer, &length) == nullptr) {
+    if (SDL_LoadWAV(argv[1], &spec, &buffer, &length) == nullptr) {
         return EXIT_FAILURE;
     }
 
