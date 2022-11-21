@@ -65,7 +65,8 @@ add_executable(visualizer
     "${CMAKE_CURRENT_SOURCE_DIR}/blur.frag"
     "${CMAKE_CURRENT_BINARY_DIR}/blur.vert.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/blur.vert"
-    "${CMAKE_SOURCE_DIR}/choreography.txt"
+    "${CMAKE_SOURCE_DIR}/choreography.json"
+    "${CMAKE_SOURCE_DIR}/plot.py"
 )
 target_link_libraries(visualizer PRIVATE
     CONAN_PKG::sdl

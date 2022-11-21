@@ -26,13 +26,16 @@ if __name__ == '__main__':
         column = columns.index(args.parameter)
         if not column:
             exit(1)
-        xs = []
-        ys = []
+        data = {}
         for line in lines:
             measure = float(line[0])
             if (not start or measure >= start) and (not end or measure < end):
-                xs.append(measure)
-                ys.append(float(line[column]))
+                data[measure] = float(line[column])
 
+    xs = []
+    ys = []
+    for measure in sorted(data.keys()):
+        xs.append(measure)
+        ys.append(data[measure])
     plot(xs[2:], ys[2:])
     show()
