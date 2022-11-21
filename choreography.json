@@ -47,8 +47,22 @@
                 "action": {
                     "name": "sawtooth",
                     "parameters": {
-                        "period": 9.0,
+                        "period": 10.0,
                         "amplitude": 360.0
+                    }
+                }
+            },
+            "20.0": {
+                "transition": {
+                    "start": -1.0,
+                    "end": 1.0
+                },
+                "action": {
+                    "name": "sawtooth",
+                    "parameters": {
+                        "period": 10.0,
+                        "phase":  6.0,
+                        "amplitude": -360.0
                     }
                 }
             }
@@ -70,8 +84,22 @@
                 "action": {
                     "name": "sawtooth",
                     "parameters": {
-                        "period": 9.0,
+                        "period": 10.0,
                         "amplitude": -360.0
+                    }
+                }
+            },
+            "20.0": {
+                "transition": {
+                    "start": -1.0,
+                    "end": 1.0
+                },
+                "action": {
+                    "name": "sawtooth",
+                    "parameters": {
+                        "period": 10.0,
+                        "phase": 6.0,
+                        "amplitude": 360.0
                     }
                 }
             }
@@ -93,8 +121,22 @@
                 "action": {
                     "name": "sawtooth",
                     "parameters": {
-                        "period": 9.0,
+                        "period": 10.0,
                         "amplitude": 360.0
+                    }
+                }
+            },
+            "20.0": {
+                "transition": {
+                    "start": -1.0,
+                    "end": 1.0
+                },
+                "action": {
+                    "name": "sawtooth",
+                    "parameters": {
+                        "period": 10.0,
+                        "phase": 6.0,
+                        "amplitude": -360.0
                     }
                 }
             }
