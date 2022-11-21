@@ -46,53 +46,6 @@ inline bool operator < (const std::unique_ptr<Action> &pa, const std::unique_ptr
     return pa->get_start() < pb->get_start();
 }
 
-class Constant : public Action {
-public:
-    Constant(float start, float value);
-
-    float get_value(float measure) const override;
-
-private:
-    float value;
-};
-
-class Periodic : public Action {
-public:
-    Periodic(float start, std::function<float(float)> func, float period, float phase, float offset, float amplitude);
-
-    float get_value(float measure) const override;
-
-private:
-    std::function<float(float)> func;
-    float period;
-    float phase;
-    float offset;
-    float amplitude;
-};
-
-class Linear : public Action {
-public:
-    Linear(float start, float increase_per_measure, float initial_value);
-
-    float get_value(float measure) const override;
-
-private:
-    float increase_per_measure;
-    float initial_value;
-
-};
-
-class Step : public Action {
-public:
-    Step(float start, float length, const std::vector<float> &values);
-
-    float get_value(float measure) const override;
-
-private:
-    float length;
-    std::vector<float> values;
-};
-
 std::unique_ptr<Action> create_action(float start, const nlohmann::json &action);
 
 }

@@ -9,34 +9,78 @@ namespace visualizer {
 
 Action::Action(float start) : start(start) {  }
 
-Constant::Constant(float start, float value) : Action(start), value(value) { }
+class Constant : public Action {
+public:
+    Constant(float start, float value)
+      : Action(start),
+        value(value) { }
 
-float Constant::get_value(float measure) const {
-    return value;
-}
+    float get_value(float measure) const override {
+        return value;
+    }
 
-Periodic::Periodic(float start, std::function<float(float)> func, float period, float phase, float offset, float amplitude)
-  : Action(start),
-    func(func),
-    period(period),
-    phase(phase),
-    offset(offset),
-    amplitude(amplitude)
-{ }
+private:
+    float value;
+};
 
-float Periodic::get_value(float measure) const {
-    return amplitude * func((measure - get_start() + phase) / period) + offset;
-}
+class Periodic : public Action {
+public:
+    Periodic(float start, std::function<float(float)> func, float period, float phase, float offset, float amplitude)
+      : Action(start),
+        func(func),
+        period(period),
+        phase(phase),
+        offset(offset),
+        amplitude(amplitude)
+    { }
 
-Linear::Linear(float start, float increase_per_measure, float initial_value)
-  : Action(start),
-    increase_per_measure(increase_per_measure),
-    initial_value(initial_value)
-{ }
+    float get_value(float measure) const override {
+        return amplitude * func((measure - get_start() + phase) / period) + offset;
+    }
 
-float Linear::get_value(float measure) const {
-    return (measure - get_start()) * increase_per_measure + initial_value;
-}
+private:
+    std::function<float(float)> func;
+    float period;
+    float phase;
+    float offset;
+    float amplitude;
+};
+
+class Linear : public Action {
+public:
+    Linear(float start, float increase_per_measure, float initial_value)
+      : Action(start),
+        increase_per_measure(increase_per_measure),
+        initial_value(initial_value)
+    { }
+
+    float get_value(float measure) const override {
+        return (measure - get_start()) * increase_per_measure + initial_value;
+    }
+
+private:
+    float increase_per_measure;
+    float initial_value;
+
+};
+
+class Step : public Action {
+public:
+    Step(float start, float length, const std::vector<float> &values)
+      : Action(start),
+        length(length),
+        values(values)
+    { }
+
+    float get_value(float measure) const override {
+        const auto pos = static_cast<int>((measure - get_start()) / length) % values.size();
+        return values[pos];
+    }
+
+private:
+    float length;
+    std::vector<float> values;
+};
 
 namespace {
 
@@ -67,14 +111,30 @@ float sine(float t) {
 
 }
 
-Step::Step(float start, float length, const std::vector<float> &values)
-  : Action(start), length(length), values(values) { }
+class ExpSawtooth : public Action {
+public:
+    ExpSawtooth(float start, float period, float phase, float slope, float height, float offset)
+        : Action(start),
+        period(period),
+        phase(phase),
+        slope(slope),
+        height(height),
+        offset(offset) { }
 
-float Step::get_value(float measure) const
-{
-    const auto pos = static_cast<int>((measure - get_start()) / length) % values.size();
-    return values[pos];
-}
+    float get_value(float measure) const override {
+        const float s = measure - get_start() + phase;
+        const float t = s - period * std::floor(s / period);
+        //const float t = 0.5f * sawtooth((measure - get_start() + phase) / period) + 1.0f;
+        return height * std::exp(-slope * t) + offset;
+    }
+
+private:
+    float period;
+    float phase;
+    float slope;
+    float height;
+    float offset;
+};
 
 std::unique_ptr<Action> create_action(float start, const nlohmann::json &action) {
     const std::string name = action["name"].get<std::string>();
@@ -104,6 +164,13 @@ std::unique_ptr<Action> create_action(float start, const nlohmann::json &action)
         const float offset = parameters.value<float>("offset", 0.0f);
         const float amplitude = parameters.value<float>("amplitude", 1.0f);
         return std::make_unique<Periodic>(start, sawtooth, period, phase, offset, amplitude);
+    } else if (name == "exp-sawtooth") {
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float slope = parameters.value<float>("slope", 1.0f);
+        const float height = parameters.value<float>("height", 1.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        return std::make_unique<ExpSawtooth>(start, period, phase, slope, height, offset);
     } else if (name == "fourier-sawtooth") {
         const float period = parameters["period"].get<float>();
         const float phase = parameters.value<float>("phase", 0.0f);

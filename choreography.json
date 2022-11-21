@@ -266,15 +266,11 @@
                 }
             },
             "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
                 "action": {
-                    "name": "step",
+                    "name": "exp-sawtooth",
                     "parameters": {
-                        "length": 0.375,
-                        "values": [ 0.1, 1.0, 0.1, 0.1]
+                        "period": 4,
+                        "slope": 2.0
                     }
                 }
             }
@@ -304,15 +300,12 @@
                 }
             },
             "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
                 "action": {
-                    "name": "step",
+                    "name": "exp-sawtooth",
                     "parameters": {
-                        "length": 0.375,
-                        "values": [ 0.1, 0.1, 0.1, 1.0]
+                        "period": 4,
+                        "phase": 2,
+                        "slope": 2.0
                     }
                 }
             }
@@ -402,15 +395,12 @@
                 }
             },
             "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
                 "action": {
-                    "name": "step",
+                    "name": "exp-sawtooth",
                     "parameters": {
-                        "length": 0.375,
-                        "values": [ 1.0, 0.1, 0.1, 0.1]
+                        "period": 4,
+                        "phase": 1,
+                        "slope": 2.0
                     }
                 }
             }
@@ -440,15 +430,12 @@
                 }
             },
             "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
                 "action": {
-                    "name": "step",
+                    "name": "exp-sawtooth",
                     "parameters": {
-                        "length": 0.375,
-                        "values": [ 0.1, 0.1, 1.0, 0.1]
+                        "period": 4,
+                        "phase": 3,
+                        "slope":  2.0
                     }
                 }
             }
