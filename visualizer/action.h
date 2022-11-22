@@ -15,6 +15,7 @@ public:
     float get_start() const { return start; }
 
     virtual float get_value(float measure) const = 0;
+    virtual float get_derivative(float measure) const;
 
     Action(const Action &) = delete;
     Action(Action &&) = delete;
