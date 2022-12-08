@@ -161,6 +161,34 @@ float d_sine(float t) {
     return 2 * static_cast<float>(M_PI) * std::cos(2 * static_cast<float>(M_PI) * t);
 }
 
+float norm_exp(float alpha, float t) {
+    return (1.0f - exp(-alpha * t)) / (1.0f - exp(-alpha));
+}
+
+float d_norm_exp(float alpha, float t) {
+    return alpha * exp(-alpha * t) / (1.0f - exp(-alpha));
+}
+
+float exp_sawtooth_wave(float t) {
+    const float s = sawtooth(t);
+    const float alpha = 2.0f;
+    if (s >= 0.0f) {
+        return norm_exp(alpha, s);
+    } else {
+        return 1.0f - norm_exp(alpha, s + 1);
+    }
+}
+
+float d_exp_sawtooth_wave(float t) {
+    const float s = sawtooth(t);
+    const float alpha = 2.0f;
+    if (s >= 0.0f) {
+        return d_norm_exp(alpha, s);
+    } else {
+        return - d_norm_exp(alpha, s + 1);
+    }
+}
+
 }
 
 class ExpSawtooth : public Action {
@@ -235,6 +263,12 @@ std::unique_ptr<Action> create_action(float start, const nlohmann::json &action)
         const float offset = parameters.value<float>("offset", 0.0f);
         const float amplitude = parameters.value<float>("amplitude", 1.0f);
         return std::make_unique<Periodic>(start, fourier_sawtooth, d_fourier_sawtooth, period, phase, offset, amplitude);
+    } else if (name == "exp-sawtooth-wave") {
+        const float period = parameters["period"].get<float>();
+        const float phase = parameters.value<float>("phase", 0.0f);
+        const float offset = parameters.value<float>("offset", 0.0f);
+        const float amplitude = parameters.value<float>("amplitude", 1.0f);
+        return std::make_unique<Periodic>(start, exp_sawtooth_wave, d_exp_sawtooth_wave, period, phase, offset, amplitude);
     } else if (name == "linear") {
         const float increase = parameters["increase"].get<float>();
         const float initial = parameters.value<float>("initial", 0.0f);

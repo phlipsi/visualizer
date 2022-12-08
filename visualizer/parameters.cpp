@@ -29,11 +29,9 @@ Parameters::Parameters(std::istream &input) {
             const float measure = std::stof(timestamp.key());
             const auto &values = timestamp.value();
             if (values.contains("transition")) {
-                const auto transition = values["transition"];
-                this->parameters[name].add_transition(measure + transition["start"].get<float>(),
-                                                      measure + transition["end"].get<float>());
+                this->parameters[name].add_transition(create_transition(measure, values["transition"]));
             }
-            this->parameters[name].add_action(measure, create_action(measure, values["action"]));
+            this->parameters[name].add_action(create_action(measure, values["action"]));
         }
     }
 }
@@ -62,10 +60,6 @@ void Parameters::set_debug_output(const std::string &filename) {
         debug_output << ';' << entry.first;
     }
     debug_output << '\n';
-}
-
-void Parameters::add_action(const std::string &name, float measure, std::unique_ptr<Action> action) {
-    parameters[name].add_action(measure, std::move(action));
 }
 
 const float &Parameters::get_parameter(const std::string &name) {

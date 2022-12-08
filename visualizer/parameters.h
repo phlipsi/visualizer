@@ -19,7 +19,7 @@ public:
     void set_measure(float measure);
     void set_debug_output(const std::string &filename);
 
-    void add_action(const std::string &name, float measure, std::unique_ptr<Action> action);
+    void add_action(const std::string &name, std::unique_ptr<Action> action);
 
     const float &get_parameter(const std::string &name);
 
