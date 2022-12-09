@@ -3,12 +3,22 @@
 #include <SDL_stdinc.h>
 #include <nlohmann/json.hpp>
 
+#include <imgui.h>
+#include <implot.h>
+
 #include <cmath>
 #include <stdexcept>
 
 namespace visualizer {
 
-Parameters::Parameters(std::istream &input) {
+Parameters::Parameters(const std::string &filename) : debugged(parameters.end()) {
+    load(filename);
+}
+
+void Parameters::load(const std::string &filename) {
+    clear();
+
+    std::ifstream input(filename);
     const auto choreography = nlohmann::json::parse(input);
     const auto general = choreography["general"];
     const float bpm = general["bpm"].get<float>();
@@ -33,6 +43,13 @@ Parameters::Parameters(std::istream &input) {
             }
             this->parameters[name].add_action(create_action(measure, values["action"]));
         }
+    }
+}
+
+void Parameters::clear() {
+    debugged = parameters.end();
+    for (auto &entry : parameters) {
+        entry.second.clear();
     }
 }
 
@@ -68,6 +85,63 @@ const float &Parameters::get_parameter(const std::string &name) {
         throw std::runtime_error("Undefined parameter " + name);
     }
     return it->second.get_value();
+}
+
+void Parameters::choose_debugged_parameter() {
+    const char *name = "";
+    if (debugged != parameters.end()) {
+        name = debugged->first.c_str();
+    }
+    if (ImGui::BeginCombo("Parameters", name)) {
+        for (auto it = parameters.begin(); it != parameters.end(); ++it) {
+            const bool is_selected = it == debugged;
+            if (ImGui::Selectable(it->first.c_str(), is_selected)) {
+                debugged = it;
+            }
+            if (is_selected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+
+namespace {
+
+class Plotter {
+public:
+    Plotter(Parameter &parameter, float measure, float around, int count)
+      : parameter(parameter),
+        xstep(2.0f * around / static_cast<float>(count)),
+        measure(measure),
+        around(around) { }
+
+    static ImPlotPoint call(int idx, void *data) {
+        Plotter *self = static_cast<Plotter *>(data);
+        return self->call_me(idx);
+    }
+
+    ImPlotPoint call_me(int idx) {
+        const float xmin = measure - around;
+        const float x = xmin + idx * xstep;
+        parameter.set_measure(x >= 0.0f ? x : 0.0f);
+        return ImPlotPoint(x, parameter.get_value());
+    }
+
+private:
+    Parameter &parameter;
+    float xstep;
+    float measure;
+    float around;
+};
+
+}
+
+void Parameters::plot_debugger_parameter(float measure, float around, int count) {
+    if (debugged != parameters.end()) {
+        Plotter plotter(debugged->second, measure, around, count);
+        ImPlot::PlotLineG(debugged->first.c_str(), &Plotter::call, &plotter, 1000);
+    }
 }
 
 }

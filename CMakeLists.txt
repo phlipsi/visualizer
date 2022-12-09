@@ -17,3 +17,7 @@ add_subdirectory(visualizer)
 
 add_executable(audio_test audio_test.cpp)
 target_link_libraries(audio_test PRIVATE CONAN_PKG::sdl)
+
+add_library(imgui_impl STATIC ${CMAKE_BINARY_DIR}/bindings/imgui_impl_opengl3.cpp ${CMAKE_BINARY_DIR}/bindings/imgui_impl_sdl.cpp)
+target_include_directories(imgui_impl PUBLIC ${CMAKE_BINARY_DIR}/bindings)
+target_link_libraries(imgui_impl PUBLIC CONAN_PKG::sdl CONAN_PKG::imgui)

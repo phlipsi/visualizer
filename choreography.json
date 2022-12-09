@@ -40,9 +40,9 @@
                 }
             },
             "16.0": {
-                "_transition": {
+                "transition": {
                     "start": -1.0,
-                    "end": 1.0,
+                    "end": 0.0,
                     "name": "newton"
                 },
                 "action": {
@@ -64,9 +64,9 @@
                 }
             },
             "16.0": {
-                "_transition": {
+                "transition": {
                     "start": -1.0,
-                    "end": 1.0,
+                    "end": 0.0,
                     "name": "newton"
                 },
                 "action": {
@@ -88,9 +88,9 @@
                 }
             },
             "16.0": {
-                "_transition": {
+                "transition": {
                     "start": -1.0,
-                    "end": 1.0,
+                    "end": 0.0,
                     "name": "newton"
                 },
                 "action": {

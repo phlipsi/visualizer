@@ -35,6 +35,8 @@ Scene::Scene(GLsizei width, GLsizei height)
         binding.attach(GL_DEPTH_ATTACHMENT, depth);
         const GLenum attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
         glDrawBuffers(2, attachments);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         if (binding.get_status() != GL_FRAMEBUFFER_COMPLETE) {
             throw std::runtime_error("Scene framebuffer not complete");

@@ -61,4 +61,9 @@ void Parameter::add_transition(std::unique_ptr<Transition> transition) {
     transitions.emplace(std::move(transition));
 }
 
+void Parameter::clear() {
+    actions.clear();
+    transitions.clear();
+}
+
 }

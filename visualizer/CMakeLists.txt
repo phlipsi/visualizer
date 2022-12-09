@@ -73,5 +73,7 @@ target_link_libraries(visualizer PRIVATE
     CONAN_PKG::glew
     CONAN_PKG::glm
     CONAN_PKG::nlohmann_json
+    imgui_impl
+    CONAN_PKG::implot
     engine)
 target_include_directories(visualizer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")

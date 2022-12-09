@@ -3,6 +3,12 @@ sdl/2.24.0
 glew/2.2.0
 glm/cci.20220420
 nlohmann_json/3.11.2
+imgui/cci.20220621+1.88.docking
+implot/0.14
 
 [generators]
 cmake
+
+[imports]
+./res/bindings, imgui_impl_opengl3* -> ./bindings
+./res/bindings, imgui_impl_sdl.* -> ./bindings

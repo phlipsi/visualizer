@@ -1,6 +1,10 @@
 #include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
+#include <implot.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -114,8 +118,15 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(logger, nullptr);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImPlot::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplSDL2_InitForOpenGL(window, context);
+    ImGui_ImplOpenGL3_Init("#version 150");
+
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageCallback(logger, nullptr);
 
     Program scene_shader;
     scene_shader.attach(Shader(GL_VERTEX_SHADER, scene_vertex_shader));
@@ -170,8 +181,7 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     //glViewport(0, 0, width, height);
-    std::ifstream choreography(argv[1]);
-    visualizer::Parameters parameters(choreography);
+    visualizer::Parameters parameters(argv[1]);
     parameters.set_debug_output("parameters.csv");
     float scale = 0.3f;
     auto ring = std::make_shared<visualizer::Ring>(3, 1.0f, std::initializer_list<std::shared_ptr<visualizer::Object>>{
@@ -203,13 +213,17 @@ int main(int argc, char *argv[]) {
     const int max_cool_down = 10;
     int cool_down = max_cool_down;
     bool quit = false;
+    bool paused = false;
+    bool debug = true;
     audio.pause(false);
+    float measure = 0.0f;
     while (!quit) {
         old_fps_ticks = fps_ticks;
         SDL_Event event;
 
         ptrdiff_t offset_shift = 0;
         while(SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
             switch(event.type) {
                 case SDL_QUIT:
                     quit = true;
@@ -251,9 +265,25 @@ int main(int argc, char *argv[]) {
                     case SDLK_PAGEDOWN:
                         offset_shift = 4 * rough_measure_offset;
                         break;
+                    case SDLK_SPACE:
+                        paused = !paused;
+                        if (!paused) {
+                            timestamp = SDL_GetTicks64();
+                        }
+                        break;
+                    case SDLK_F5:
+                        parameters.load(argv[1]);
+                        break;
+                    case SDLK_d:
+                        debug = !debug;
+                        break;
                     }
                     break;
             }
+        }
+        audio.pause(paused);
+        if (paused) {
+            timestamp = SDL_GetTicks64();
         }
         if (offset_shift != 0) {
             const auto lock = audio.lock();
@@ -269,7 +299,7 @@ int main(int argc, char *argv[]) {
             auto binding = scene.bind_as_target();
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             auto usage = scene_shader.use();
             float t = 0.0f;
@@ -277,8 +307,7 @@ int main(int argc, char *argv[]) {
                 const auto lock = audio.lock();
                 t = static_cast<float>(offset) * ms_per_offset + (SDL_GetTicks64() - timestamp);
             }
-            const float measure = t / ms_per_measure;
-            std::cout << measure << std::endl;
+            measure = t / ms_per_measure;
             parameters.set_measure(measure >= 0.0f ? measure : 0.0f);
             batch.clear();
             collection->draw(batch, model);
@@ -346,6 +375,27 @@ int main(int argc, char *argv[]) {
 
             quad.draw();
         }
+        if (debug) {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL2_NewFrame();
+            ImGui::NewFrame();
+
+            ImGui::Begin("Parameters");
+            parameters.choose_debugged_parameter();
+            if (ImPlot::BeginPlot("##notitle", ImVec2(-1, 0), ImPlotFlags_NoFrame)) {
+                ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+                ImPlot::SetupAxisLimits(ImAxis_X1, measure - 4.0f, measure + 4.0f, ImGuiCond_Always);
+                ImPlot::SetupFinish();
+                parameters.plot_debugger_parameter(measure, 4.0, 1000);
+                double x = measure;
+                ImPlot::DragLineX(1, &x, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                ImPlot::EndPlot();
+            }
+            ImGui::End();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
         SDL_GL_SwapWindow(window);
 
         if (cool_down == 0) {
@@ -357,6 +407,11 @@ int main(int argc, char *argv[]) {
             --cool_down;
         }
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImPlot::DestroyContext();
+    ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);

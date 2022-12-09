@@ -183,9 +183,9 @@ float d_exp_sawtooth_wave(float t) {
     const float s = sawtooth(t);
     const float alpha = 2.0f;
     if (s >= 0.0f) {
-        return d_norm_exp(alpha, s);
+        return d_sawtooth(t) * d_norm_exp(alpha, s);
     } else {
-        return - d_norm_exp(alpha, s + 1);
+        return -d_sawtooth(t) * d_norm_exp(alpha, s + 1);
     }
 }
 
