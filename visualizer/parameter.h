@@ -1,29 +1,25 @@
 #pragma once
 
 #include "action.h"
-#include "transition.h"
 
-#include <set>
+#include <nlohmann/json_fwd.hpp>
+
 #include <memory>
+#include <vector>
 
 namespace visualizer {
 
 class Parameter {
 public:
-    void set_measure(float measure);
-    void add_action(std::unique_ptr<Action> action);
-    void add_transition(std::unique_ptr<Transition> transition);
-    void clear();
+    Parameter(const nlohmann::json &actions);
 
+    void set_measure(float measure);
     const float &get_value() const { return value; }
 
 private:
-    typedef std::set<std::unique_ptr<Action>> Actions;
-    typedef std::set<std::unique_ptr<Transition>> Transitions;
-
-    float value;
+    using Actions = std::vector<std::unique_ptr<Action>>;
     Actions actions;
-    Transitions transitions;
+    float value;
 };
 
 }

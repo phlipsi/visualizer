@@ -6,447 +6,168 @@
     "parameters": {
         "tick": {
             "0.0": {
-                "action": {
-                    "name": "step",
-                    "parameters": {
-                        "length": 0.125,
-                        "values": [ 1.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0 ]
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 1.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0 ]
+                }
+            }
+        },
+        "ring.triangle.angle": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.0 ]
+                }
+            }
+        },
+        "ring.triangle.height": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 1.0 ]
+                }
+            }
+        },
+        "ring.triangle.width": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 1.0 ]
+                }
+            }
+        },
+        "ring.triangle.glow1": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.5 ]
+                }
+            }
+        },
+        "ring.triangle.glow2": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.5 ]
+                }
+            }
+        },
+        "ring.rectangle.angle": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.0 ]
+                }
+            }
+        },
+        "ring.rectangle.height": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 1.0 ]
+                }
+            }
+        },
+        "ring.rectangle.width": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 1.0 ]
+                }
+            }
+        },
+        "ring.rectangle.glow1": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.5 ]
+                }
+            }
+        },
+        "ring.rectangle.glow2": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.5 ]
+                }
+            }
+        },
+        "ring1.z": {
+            "0.0": {
+                "action": "spline",
+                "parameters": {
+                    "control-points": {
+                        "0.0": 3,
+                        "4.0": [ 0.0, 0.0 ]
                     }
+                }
+            },
+            "4.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.0 ]
+                }
+            }
+        },
+        "ring2.z": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 5.0 ]
+                }
+            }
+        },
+        "ring3.z": {
+            "0.0": {
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 5.0 ]
                 }
             }
         },
         "ring1.angle": {
             "0.0": {
-                "action": {
-                    "name": "sawtooth",
-                    "parameters": {
-                        "period": 8.0,
-                        "phase": 0.0,
-                        "amplitude": 360.0
-                    }
-                }
-            },
-            "8.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.0
-                    }
-                }
-            },
-            "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 0.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "exp-sawtooth-wave",
-                    "parameters": {
-                        "period": 3.0,
-                        "amplitude": 90.0
+                "action": "periodic-spline",
+                "parameters": {
+                    "length": 4.0,
+                    "control-points": {
+                        "0.0": 0.0,
+                        "1.0": 90.0,
+                        "2.0": 0.0,
+                        "3.0": 90.0
                     }
                 }
             }
         },
         "ring2.angle": {
             "0.0": {
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.0
-                    }
-                }
-            },
-            "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 0.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "exp-sawtooth-wave",
-                    "parameters": {
-                        "period": 3.0,
-                        "amplitude": -90.0
-                    }
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.0 ]
                 }
             }
         },
         "ring3.angle": {
             "0.0": {
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.0
-                    }
-                }
-            },
-            "16.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 0.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "exp-sawtooth-wave",
-                    "parameters": {
-                        "period": 3.0,
-                        "amplitude": 90.0
-                    }
-                }
-            }
-        },
-        "ring1.z": {
-            "0.0": {
-                "action": {
-                    "name": "linear",
-                    "parameters": {
-                        "initial": 3.0,
-                        "increase": -0.75
-                    }
-                }
-            },
-            "4.0": {
-                "transition": {
-                    "start": -1.0,
-                    "end": 1.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.0
-                    }
-                }
-
-            },
-            "12.0": {
-                "transition": {
-                    "start": -2.0,
-                    "end": 4.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": -3.0
-                    }
-                }
-            }
-        },
-        "ring2.z": {
-            "0.0": {
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 5.0
-                    }
-                }
-            },
-            "12.0": {
-                "transition": {
-                    "start": -2.0,
-                    "end": 4.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.5
-                    }
-                }
-            }
-        },
-        "ring3.z": {
-            "0.0": {
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 5.0
-                    }
-                }
-            },
-            "12.0": {
-                "transition": {
-                    "start": -2.0,
-                    "end": 4.0,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 2.25
-                    }
-                }
-            }
-        },
-        "ring.triangle.angle": {
-            "0.0": {
-                "action": {
-                    "name": "fourier-square",
-                    "parameters": {
-                        "period": 2.0,
-                        "amplitude": 90.0
-                    }
-                }
-            },
-            "8.0": {
-                "transition": {
-                    "start": -0.5,
-                    "end": 0.5,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "sawtooth",
-                    "parameters": {
-                        "period": 4.0,
-                        "amplitude": -360.0
-                    }
-                }
-            },
-            "16.0": {
-                "transition": {
-                    "start": -0.5,
-                    "end": 0.5,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "fourier-square",
-                    "parameters": {
-                        "period": 2.0,
-                        "amplitude": 90.0
-                    }
-                }
-            }
-        },
-        "ring.triangle.height": {
-            "0.0": {
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 6.0,
-                        "offset": 1.0,
-                        "amplitude": 0.1
-                    }
-                }
-            }
-        },
-        "ring.triangle.width": {
-            "0.0": {
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 6.0,
-                        "offset": 1.0,
-                        "amplitude": -0.1
-                    }
-                }
-            }
-        },
-        "ring.triangle.glow1": {
-            "0.0": {
-                "action": {
-                    "name": "step",
-                    "parameters": {
-                        "length": 0.5,
-                        "values": [ 0.1, 1.0, 0.1, 0.1]
-                    }
-                }
-            },
-            "8.0": {
-                "_transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 1.0,
-                        "offset": 0.5,
-                        "amplitude": 0.5
-                    }
-                }
-            },
-            "16.0": {
-                "action": {
-                    "name": "exp-sawtooth",
-                    "parameters": {
-                        "period": 4,
-                        "slope": 2.0
-                    }
-                }
-            }
-        },
-        "ring.triangle.glow2": {
-            "0.0": {
-                "action": {
-                    "name": "step",
-                    "parameters": {
-                        "length": 0.5,
-                        "values": [ 0.1, 0.1, 0.1, 1.0]
-                    }
-                }
-            },
-            "8.0": {
-                "_transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 1.0,
-                        "offset": 0.5,
-                        "amplitude": 0.5
-                    }
-                }
-            },
-            "16.0": {
-                "action": {
-                    "name": "exp-sawtooth",
-                    "parameters": {
-                        "period": 4,
-                        "phase": 2,
-                        "slope": 2.0
-                    }
-                }
-            }
-        },
-        "ring.rectangle.angle": {
-            "0.0": {
-                "action": {
-                    "name": "constant",
-                    "parameters": {
-                        "value": 0.0
-                    }
-                }
-            },
-            "8.0": {
-                "transition": {
-                    "start": -0.5,
-                    "end": 0.5,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "sawtooth",
-                    "parameters": {
-                        "period": 4.0,
-                        "amplitude": 360.0
-                    }
-                }
-            },
-            "16.0": {
-                "transition": {
-                    "start": -0.5,
-                    "end": 0.5,
-                    "name": "newton"
-                },
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 4.0,
-                        "amplitude": 360.0
-                    }
-                }
-            }
-        },
-        "ring.rectangle.height": {
-            "0.0": {
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 0.375,
-                        "offset": 1.0,
-                        "amplitude": 0.05
-                    }
-                }
-            }
-        },
-        "ring.rectangle.width": {
-            "0.0": {
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 0.375,
-                        "offset": 1.0,
-                        "amplitude": -0.05
-                    }
-                }
-            }
-        },
-        "ring.rectangle.glow1": {
-            "0.0": {
-                "action": {
-                    "name": "step",
-                    "parameters": {
-                        "length": 0.5,
-                        "values": [ 1.0, 0.1, 0.1, 0.1]
-                    }
-                }
-            },
-            "8.0": {
-                "_transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 1.0,
-                        "offset": 0.5,
-                        "amplitude": 0.5
-                    }
-                }
-            },
-            "16.0": {
-                "action": {
-                    "name": "exp-sawtooth",
-                    "parameters": {
-                        "period": 4,
-                        "phase": 1,
-                        "slope": 2.0
-                    }
-                }
-            }
-        },
-        "ring.rectangle.glow2": {
-            "0.0": {
-                "action": {
-                    "name": "step",
-                    "parameters": {
-                        "length": 0.5,
-                        "values": [ 0.1, 0.1, 1.0, 0.1]
-                    }
-                }
-            },
-            "8.0": {
-                "_transition": {
-                    "start": -1.0,
-                    "end": 1.0
-                },
-                "action": {
-                    "name": "sine",
-                    "parameters": {
-                        "period": 1.0,
-                        "offset": 0.5,
-                        "amplitude": 0.5
-                    }
-                }
-            },
-            "16.0": {
-                "action": {
-                    "name": "exp-sawtooth",
-                    "parameters": {
-                        "period": 4,
-                        "phase": 3,
-                        "slope":  2.0
-                    }
+                "action": "step",
+                "parameters": {
+                    "length": 1.0,
+                    "values": [ 0.0 ]
                 }
             }
         }

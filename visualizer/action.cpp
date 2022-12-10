@@ -9,89 +9,13 @@ namespace visualizer {
 
 Action::Action(float start) : start(start) {  }
 
-float Action::get_derivative(float measure) const {
-    return (get_value(measure + 0.1) - get_value(measure)) / 0.1f;
-}
-
-class Constant : public Action {
-public:
-    Constant(float start, float value)
-      : Action(start),
-        value(value) { }
-
-    float get_value(float measure) const override {
-        return value;
-    }
-
-    float get_derivative(float measure) const {
-        return 0.0f;
-    }
-
-private:
-    float value;
-};
-
-class Periodic : public Action {
-public:
-    Periodic(float start,
-             std::function<float(float)> func,
-             std::function<float(float)> dfunc,
-             float period,
-             float phase,
-             float offset,
-             float amplitude)
-      : Action(start),
-        func(func),
-        dfunc(dfunc),
-        period(period),
-        phase(phase),
-        offset(offset),
-        amplitude(amplitude)
-    { }
-
-    float get_value(float measure) const override {
-        return amplitude * func((measure - get_start() + phase) / period) + offset;
-    }
-
-    float get_derivative(float measure) const override {
-        return amplitude * dfunc((measure - get_start() + phase) / period) / period;
-    }
-private:
-    std::function<float(float)> func;
-    std::function<float(float)> dfunc;
-    float period;
-    float phase;
-    float offset;
-    float amplitude;
-};
-
-class Linear : public Action {
-public:
-    Linear(float start, float increase_per_measure, float initial_value)
-      : Action(start),
-        increase_per_measure(increase_per_measure),
-        initial_value(initial_value)
-    { }
-
-    float get_value(float measure) const override {
-        return (measure - get_start()) * increase_per_measure + initial_value;
-    }
-
-    float get_derivative(float measure) const override {
-        return increase_per_measure;
-    }
-
-private:
-    float increase_per_measure;
-    float initial_value;
-
-};
+namespace {
 
 class Step : public Action {
 public:
     Step(float start, float length, const std::vector<float> &values)
       : Action(start),
-        length(length),
+        length(length / values.size()),
         values(values)
     { }
 
@@ -100,179 +24,188 @@ public:
         return values[pos];
     }
 
-    float get_derivative(float measure) const override {
-        return 0.0f;
-    }
-
 private:
     float length;
     std::vector<float> values;
 };
 
-namespace {
-
-float fourier_square(float t) {
-    float result = 0;
-    result += sinf(2 * static_cast<float>(M_PI) * 1.0f * t) / 1.0f;
-    result += sinf(2 * static_cast<float>(M_PI) * 3.0f * t) / 3.0f;
-    result += sinf(2 * static_cast<float>(M_PI) * 5.0f * t) / 5.0f;
-    return 4.0f * result / static_cast<float>(M_PI);
-}
-
-float d_fourier_square(float t) {
-    float result = 0;
-    result += 2 * static_cast<float>(M_PI) * 1.0f * cosf(2 * static_cast<float>(M_PI) * 1.0f * t) / 1.0f;
-    result += 2 * static_cast<float>(M_PI) * 3.0f * cosf(2 * static_cast<float>(M_PI) * 3.0f * t) / 3.0f;
-    result += 2 * static_cast<float>(M_PI) * 5.0f * cosf(2 * static_cast<float>(M_PI) * 5.0f * t) / 5.0f;
-    return 4.0f * result / static_cast<float>(M_PI);
-}
-
-float fourier_sawtooth(float t) {
-    float scale = 2.0f / static_cast<float>(M_PI);
-    float sum = sinf(static_cast<float>(M_PI) * t);
-    sum -= sinf(2 * static_cast<float>(M_PI) * t) / 2.0f;
-    sum += sinf(3 * static_cast<float>(M_PI) * t) / 3.0f;
-    sum -= sinf(4 * static_cast<float>(M_PI) * t) / 4.0f;
-    return scale * sum;
-}
-
-float d_fourier_sawtooth(float t) {
-    float scale = 2.0f / static_cast<float>(M_PI);
-    float sum = static_cast<float>(M_PI) * cosf(static_cast<float>(M_PI) * t);
-    sum -= 2 * static_cast<float>(M_PI) * cosf(2 * static_cast<float>(M_PI) * t) / 2.0f;
-    sum += 3 * static_cast<float>(M_PI) * cosf(3 * static_cast<float>(M_PI) * t) / 3.0f;
-    sum -= 4 * static_cast<float>(M_PI) * cosf(4 * static_cast<float>(M_PI) * t) / 4.0f;
-    return scale * sum;
-}
-
-float sawtooth(float t) {
-    return 2.0f * t - 2.0f * std::floor((2.0f * t - 1.0f) / 2.0f) - 2.0f;
-}
-
-float d_sawtooth(float t) {
-    return 2.0f;
-}
-
-float sine(float t) {
-    return std::sin(2 * static_cast<float>(M_PI) * t);
-}
-
-float d_sine(float t) {
-    return 2 * static_cast<float>(M_PI) * std::cos(2 * static_cast<float>(M_PI) * t);
-}
-
-float norm_exp(float alpha, float t) {
-    return (1.0f - exp(-alpha * t)) / (1.0f - exp(-alpha));
-}
-
-float d_norm_exp(float alpha, float t) {
-    return alpha * exp(-alpha * t) / (1.0f - exp(-alpha));
-}
-
-float exp_sawtooth_wave(float t) {
-    const float s = sawtooth(t);
-    const float alpha = 2.0f;
-    if (s >= 0.0f) {
-        return norm_exp(alpha, s);
-    } else {
-        return 1.0f - norm_exp(alpha, s + 1);
-    }
-}
-
-float d_exp_sawtooth_wave(float t) {
-    const float s = sawtooth(t);
-    const float alpha = 2.0f;
-    if (s >= 0.0f) {
-        return d_sawtooth(t) * d_norm_exp(alpha, s);
-    } else {
-        return -d_sawtooth(t) * d_norm_exp(alpha, s + 1);
-    }
-}
-
-}
-
-class ExpSawtooth : public Action {
+class ControlPoint {
 public:
-    ExpSawtooth(float start, float period, float phase, float slope, float height, float offset)
-        : Action(start),
-        period(period),
-        phase(phase),
-        slope(slope),
-        height(height),
-        offset(offset) { }
+    ControlPoint(float time, float value)
+      : time(time),
+        value(value),
+        derivative(NAN)
+    { }
 
-    float get_value(float measure) const override {
-        const float s = measure - get_start() + phase;
-        const float t = s - period * std::floor(s / period);
-        //const float t = 0.5f * sawtooth((measure - get_start() + phase) / period) + 1.0f;
-        return height * std::exp(-slope * t) + offset;
+    ControlPoint(float time, float value, float derivative)
+      : time(time),
+        value(value),
+        derivative(derivative)
+    { }
+
+    float time;
+    float value;
+    float derivative;
+};
+
+bool operator < (const ControlPoint &a, const ControlPoint &b) {
+    return a.time < b.time;
+}
+
+bool operator < (float a, const ControlPoint &b) {
+    return a < b.time;
+}
+
+float calc_derivative(const ControlPoint &a, const ControlPoint &b) {
+    return (b.value - a.value) / (b.time - a.time);
+}
+
+float newton_interpolation(float a, float fa, float faa, float b, float fb, float fbb, float x) {
+    const float fab = (fb - fa) / (b - a);
+    const float faab = (fab - faa) / (b - a);
+    const float fabb = (fbb - fab) / (b - a);
+    const float faabb = (fabb - faab) / (b - a);
+    return fa + faa * (x - a) + faab * (x - a) * (x - a) + faabb * (x - a) * (x - a) * (x - b);
+}
+
+float newton_interpolation(const ControlPoint &a, const ControlPoint &b, float t) {
+    return newton_interpolation(a.time, a.value, a.derivative, b.time, b.value, b.derivative, t);
+}
+
+float modf(float x, float m) {
+    return x - std::floor(x / m) * m;
+}
+
+template<typename Iter, typename Value>
+Iter find_last_less_than_or_equal(Iter begin, Iter end, const Value &value) {
+    if (begin == end) {
+        return end;
+    }
+    const Iter result = std::upper_bound(begin, end, value);
+    if (result == begin) {
+        return end;
+    } else {
+        return std::prev(result);
+    }
+}
+
+class HermiteSpline : public Action {
+public:
+    using ControlPoints = std::vector<ControlPoint>;
+
+    HermiteSpline(float start, ControlPoints control_points)
+      : Action(start),
+        control_points(control_points)
+    {
+        HermiteSpline::ControlPoints::iterator previous = this->control_points.begin();
+        HermiteSpline::ControlPoints::iterator current = std::next(previous);
+        HermiteSpline::ControlPoints::iterator next = std::next(current);
+
+        if (isnan(previous->derivative)) {
+            previous->derivative = calc_derivative(*previous, *current);
+        }
+        while (next != this->control_points.end()) {
+            if (isnan(current->derivative)) {
+                current->derivative = calc_derivative(*next, *previous);
+            }
+            ++previous;
+            ++current;
+            ++next;
+        }
+        if (isnan(current->derivative)) {
+            current->derivative = calc_derivative(*previous, *current);
+        }
     }
 
-    float get_derivative(float measure) const override {
-        const float s = measure - get_start() + phase;
-        const float t = s - period * std::floor(s / period);
-        return -slope * height * std::exp(-slope * t);
+protected:
+    float calc_value(float time) const {
+        ControlPoints::const_iterator current = find_last_less_than_or_equal(control_points.begin(), control_points.end(), time);
+        if (current == control_points.end()) {
+            current = control_points.begin();
+        } else if (std::next(current) == control_points.end()) {
+            --current;
+        }
+        const ControlPoints::const_iterator next = std::next(current);
+        return newton_interpolation(*current, *next, time);
     }
 
 private:
-    float period;
-    float phase;
-    float slope;
-    float height;
-    float offset;
+    ControlPoints control_points;
 };
 
+HermiteSpline::ControlPoints parse_control_points(const nlohmann::json &control_points) {
+    HermiteSpline::ControlPoints result;
+    for (const auto &item : control_points.items()) {
+        const float time = std::stof(item.key());
+        const auto &parameter = item.value();
+        if (parameter.is_array()) {
+            const float value = parameter.at(0).get<float>();
+            const float derivative = parameter.at(0).get<float>();
+            result.emplace_back(time, value, derivative);
+        } else if (parameter.is_number()) {
+            result.emplace_back(time, parameter.get<float>());
+        }
+    }
+    std::sort(result.begin(), result.end());
+    return result;
+}
+
+HermiteSpline::ControlPoints periodic_catmull_rom_spline(float length, const nlohmann::json &control_points) {
+    HermiteSpline::ControlPoints result = parse_control_points(control_points);
+
+    ControlPoint front_mirror = result.back();
+    front_mirror.time -= length;
+    ControlPoint back_mirror = result.front();
+    back_mirror.time += length;
+    result.insert(result.begin(), front_mirror);
+    result.push_back(back_mirror);
+
+    return result;
+}
+
+class PeriodicSpline : public HermiteSpline {
+public:
+    PeriodicSpline(float start, float length, const nlohmann::json &control_points)
+      : HermiteSpline(start, periodic_catmull_rom_spline(length, control_points)),
+        length(length)
+    { }
+
+    float get_value(float measure) const override {
+        return calc_value(modf(measure - get_start(), length));
+    }
+
+private:
+    float length;
+};
+
+
+class Spline : public HermiteSpline {
+public:
+    Spline(float start, const nlohmann::json &control_points)
+      : HermiteSpline(start, parse_control_points(control_points))
+    { }
+
+    float get_value(float measure) const override {
+        return calc_value(measure - get_start());
+    }
+};
+
+}
+
 std::unique_ptr<Action> create_action(float start, const nlohmann::json &action) {
-    const std::string name = action["name"].get<std::string>();
-    const auto &parameters = action["parameters"];
+    const std::string &name = action.at("action").get<std::string>();
+    const auto &parameters = action.at("parameters");
     if (name == "step") {
         const float length = parameters["length"].get<float>();
         const std::vector<float> params = parameters["values"].get<std::vector<float>>();
         return std::make_unique<Step>(start, length, params);
-    } else if (name == "sine") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        const float amplitude = parameters.value<float>("amplitude", 1.0f);
-        return std::make_unique<Periodic>(start, sine, d_sine, period, phase, offset, amplitude);
-    } else if (name == "constant") {
-        const float value = parameters["value"].get<float>();
-        return std::make_unique<Constant>(start, value);
-    } else if (name == "fourier-square") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        const float amplitude = parameters.value<float>("amplitude", 1.0f);
-        return std::make_unique<Periodic>(start, fourier_square, d_fourier_square, period, phase, offset, amplitude);
-    } else if (name == "sawtooth") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        const float amplitude = parameters.value<float>("amplitude", 1.0f);
-        return std::make_unique<Periodic>(start, sawtooth, d_sawtooth, period, phase, offset, amplitude);
-    } else if (name == "exp-sawtooth") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float slope = parameters.value<float>("slope", 1.0f);
-        const float height = parameters.value<float>("height", 1.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        return std::make_unique<ExpSawtooth>(start, period, phase, slope, height, offset);
-    } else if (name == "fourier-sawtooth") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        const float amplitude = parameters.value<float>("amplitude", 1.0f);
-        return std::make_unique<Periodic>(start, fourier_sawtooth, d_fourier_sawtooth, period, phase, offset, amplitude);
-    } else if (name == "exp-sawtooth-wave") {
-        const float period = parameters["period"].get<float>();
-        const float phase = parameters.value<float>("phase", 0.0f);
-        const float offset = parameters.value<float>("offset", 0.0f);
-        const float amplitude = parameters.value<float>("amplitude", 1.0f);
-        return std::make_unique<Periodic>(start, exp_sawtooth_wave, d_exp_sawtooth_wave, period, phase, offset, amplitude);
-    } else if (name == "linear") {
-        const float increase = parameters["increase"].get<float>();
-        const float initial = parameters.value<float>("initial", 0.0f);
-        return std::make_unique<Linear>(start, increase, initial);
+    } else if (name == "periodic-spline") {
+        const float length = parameters["length"].get<float>();
+        const auto &control_points = parameters["control-points"];
+        return std::make_unique<PeriodicSpline>(start, length, control_points);
+    } else if (name == "spline") {
+        const auto &control_points = parameters["control-points"];
+        return std::make_unique<Spline>(start, control_points);
     } else {
         throw std::runtime_error("Unknown action " + name);
     }

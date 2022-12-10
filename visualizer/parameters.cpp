@@ -35,22 +35,13 @@ void Parameters::load(const std::string &filename) {
     const auto parameters = choreography["parameters"];
     for (const auto &entry : parameters.items()) {
         const std::string name = entry.key();
-        for (const auto &timestamp : entry.value().items()) {
-            const float measure = std::stof(timestamp.key());
-            const auto &values = timestamp.value();
-            if (values.contains("transition")) {
-                this->parameters[name].add_transition(create_transition(measure, values["transition"]));
-            }
-            this->parameters[name].add_action(create_action(measure, values["action"]));
-        }
+        this->parameters.emplace(name, Parameter(entry.value()));
     }
 }
 
 void Parameters::clear() {
     debugged = parameters.end();
-    for (auto &entry : parameters) {
-        entry.second.clear();
-    }
+    parameters.clear();
 }
 
 void Parameters::set_measure(float measure) {
