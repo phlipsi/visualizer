@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <iostream>
 
 namespace visualizer {
 
@@ -16,32 +17,43 @@ Parameters::Parameters(const std::string &filename) : debugged(parameters.end())
 }
 
 void Parameters::load(const std::string &filename) {
-    clear();
+    try {
+        std::ifstream input(filename);
+        const auto choreography = nlohmann::json::parse(input);
 
-    std::ifstream input(filename);
-    const auto choreography = nlohmann::json::parse(input);
-    const auto general = choreography["general"];
-    const float bpm = general["bpm"].get<float>();
-    const std::string meter = general["meter"].get<std::string>();
-    const std::string::size_type slash = meter.find('/');
-    int meter_num = 0;
-    int meter_denum = 0;
-    if (slash != std::string::npos) {
-        meter_num = std::stoi(meter.substr(0, slash));
-        meter_denum = std::stoi(meter.substr(slash + 1));
-    }
-    ms_per_measure = static_cast<float>(meter_num) * 60000.0f / bpm;
+        clear();
 
-    const auto parameters = choreography["parameters"];
-    for (const auto &entry : parameters.items()) {
-        const std::string name = entry.key();
-        this->parameters.emplace(name, Parameter(entry.value()));
+        const auto general = choreography["general"];
+        const float bpm = general["bpm"].get<float>();
+        const std::string meter = general["meter"].get<std::string>();
+        const std::string::size_type slash = meter.find('/');
+        int meter_num = 0;
+        int meter_denum = 0;
+        if (slash != std::string::npos) {
+            meter_num = std::stoi(meter.substr(0, slash));
+            meter_denum = std::stoi(meter.substr(slash + 1));
+        }
+        ms_per_measure = static_cast<float>(meter_num) * 60000.0f / bpm;
+
+        const auto parameters = choreography["parameters"];
+        for (const auto &entry : parameters.items()) {
+            const std::string name = entry.key();
+            const auto it = this->parameters.find(name);
+            if (it == this->parameters.end()) {
+                this->parameters.emplace(name, Parameter(entry.value()));
+            } else {
+                it->second.load(entry.value());
+            }
+        }
+    } catch (const nlohmann::json::parse_error &e) {
+        std::cerr << "Parse error: " << e.what() << '\n';
     }
 }
 
 void Parameters::clear() {
-    debugged = parameters.end();
-    parameters.clear();
+    for (auto &entry : parameters) {
+        entry.second.clear();
+    }
 }
 
 void Parameters::set_measure(float measure) {

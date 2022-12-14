@@ -7,10 +7,19 @@ namespace visualizer {
 Parameter::Parameter(const nlohmann::json &actions)
   : value(0.0f)
 {
+    load(actions);
+}
+
+void Parameter::load(const nlohmann::json &actions) {
+    this->actions.clear();
     for (const auto &item : actions.items()) {
         const float time = std::stof(item.key());
         this->actions.emplace_back(create_action(time, item.value()));
     }
+}
+
+void Parameter::clear() {
+    this->actions.clear();
 }
 
 namespace {

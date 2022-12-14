@@ -34,18 +34,28 @@ public:
     ControlPoint(float time, float value)
       : time(time),
         value(value),
-        derivative(NAN)
+        left_derivative(NAN),
+        right_derivative(NAN)
     { }
 
     ControlPoint(float time, float value, float derivative)
       : time(time),
         value(value),
-        derivative(derivative)
+        left_derivative(derivative),
+        right_derivative(derivative)
+    { }
+
+    ControlPoint(float time, float value, float left_derivative, float right_derivative)
+      : time(time),
+        value(value),
+        left_derivative(left_derivative),
+        right_derivative(right_derivative)
     { }
 
     float time;
     float value;
-    float derivative;
+    float left_derivative;
+    float right_derivative;
 };
 
 bool operator < (const ControlPoint &a, const ControlPoint &b) {
@@ -69,7 +79,7 @@ float newton_interpolation(float a, float fa, float faa, float b, float fb, floa
 }
 
 float newton_interpolation(const ControlPoint &a, const ControlPoint &b, float t) {
-    return newton_interpolation(a.time, a.value, a.derivative, b.time, b.value, b.derivative, t);
+    return newton_interpolation(a.time, a.value, a.right_derivative, b.time, b.value, b.left_derivative, t);
 }
 
 float modf(float x, float m) {
@@ -101,19 +111,25 @@ public:
         HermiteSpline::ControlPoints::iterator current = std::next(previous);
         HermiteSpline::ControlPoints::iterator next = std::next(current);
 
-        if (isnan(previous->derivative)) {
-            previous->derivative = calc_derivative(*previous, *current);
+        if (isnan(previous->left_derivative) || isnan(previous->right_derivative)) {
+            const float derivative = calc_derivative(*previous, *current);
+            previous->left_derivative = derivative;
+            previous->right_derivative = derivative;
         }
         while (next != this->control_points.end()) {
-            if (isnan(current->derivative)) {
-                current->derivative = calc_derivative(*next, *previous);
+            if (isnan(current->left_derivative) || isnan(current->right_derivative)) {
+                const float derivative = calc_derivative(*next, *previous);
+                current->left_derivative = derivative;
+                current->right_derivative = derivative;
             }
             ++previous;
             ++current;
             ++next;
         }
-        if (isnan(current->derivative)) {
-            current->derivative = calc_derivative(*previous, *current);
+        if (isnan(current->left_derivative) || isnan(current->right_derivative)) {
+            const float derivative = calc_derivative(*previous, *current);
+            current->left_derivative = derivative;
+            current->right_derivative = derivative;
         }
     }
 
@@ -129,7 +145,6 @@ protected:
         return newton_interpolation(*current, *next, time);
     }
 
-private:
     ControlPoints control_points;
 };
 
@@ -139,9 +154,19 @@ HermiteSpline::ControlPoints parse_control_points(const nlohmann::json &control_
         const float time = std::stof(item.key());
         const auto &parameter = item.value();
         if (parameter.is_array()) {
-            const float value = parameter.at(0).get<float>();
-            const float derivative = parameter.at(0).get<float>();
-            result.emplace_back(time, value, derivative);
+            if (parameter.size() == 1) {
+                const float value = parameter.at(0).get<float>();
+                result.emplace_back(time, value);
+            } else if (parameter.size() == 2) {
+                const float value = parameter.at(0).get<float>();
+                const float derivative = parameter.at(1).get<float>();
+                result.emplace_back(time, value, derivative);
+            } else if (parameter.size() == 3) {
+                const float value = parameter.at(0).get<float>();
+                const float left_derivative = parameter.at(1).get<float>();
+                const float right_derivative = parameter.at(2).get<float>();
+                result.emplace_back(time, value, left_derivative, right_derivative);
+            }
         } else if (parameter.is_number()) {
             result.emplace_back(time, parameter.get<float>());
         }
@@ -168,7 +193,16 @@ public:
     PeriodicSpline(float start, float length, const nlohmann::json &control_points)
       : HermiteSpline(start, periodic_catmull_rom_spline(length, control_points)),
         length(length)
-    { }
+    {
+        auto &first = this->control_points.front();
+        auto &second = this->control_points[1];
+        auto &last = this->control_points.back();
+        auto &second_to_last = this->control_points[control_points.size() - 2];
+        first.left_derivative = second_to_last.left_derivative;
+        first.right_derivative = second_to_last.right_derivative;
+        last.left_derivative = second.left_derivative;
+        last.right_derivative = second.right_derivative;
+    }
 
     float get_value(float measure) const override {
         return calc_value(modf(measure - get_start(), length));

@@ -11,7 +11,9 @@ namespace visualizer {
 
 class Parameter {
 public:
-    Parameter(const nlohmann::json &actions);
+    explicit Parameter(const nlohmann::json &actions);
+    void load(const nlohmann::json &actions);
+    void clear();
 
     void set_measure(float measure);
     const float &get_value() const { return value; }
